@@ -61,7 +61,18 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, FundRecovery, Wi
         _requestWithdrawals(_token, _sender, _withdrawalAmount, _withdrawalAddr);
     }
 
-    function claimWithdrawals(address _receiver, uint256[] memory _requestIds) external {
+    function bulkClaimWithdrawals(address[] memory _receivers, uint256[][] memory _requestIds) external {
+        uint256 bulkLen = _receivers.length;
+        if (bulkLen != _requestIds.length) {
+            revert Errors.InvalidLength();
+        }
+
+        for (uint256 i = 0; i < bulkLen; ++i) {
+            claimWithdrawals(_receivers[i], _requestIds[i]);
+        }
+    }
+
+    function claimWithdrawals(address _receiver, uint256[] memory _requestIds) public {
         for (uint256 i = 0; i < _requestIds.length; ++i) {
             uint256 _requestId = _requestIds[i];
 
@@ -117,7 +128,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, FundRecovery, Wi
      * @notice Contract version
      */
     function version() public pure override returns (uint8) {
-        return 1;
+        return 2;
     }
 
     /**

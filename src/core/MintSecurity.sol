@@ -22,7 +22,7 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
 
     mapping(address => uint256) internal guardianIndicesOneBased;
 
-    mapping(bytes32 => address) public mintMsgHash;
+    mapping(bytes32 => address) public mintedMsgHash;
 
     address public obeliskNetwork;
 
@@ -142,6 +142,36 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         emit GuardianRemoved(addr);
     }
 
+    function bulkMint(
+        address[] memory tokens,
+        bytes32[] memory txHashs,
+        address[] memory destAddrs,
+        uint256[] memory stakingOutputIdxs,
+        uint256[] memory inclusionHeights,
+        uint256[] memory stakingAmounts,
+        Signature[][] calldata bulkSortedGuardianSignatures
+    ) external {
+        uint256 bulkLen = tokens.length;
+        if (
+            txHashs.length != bulkLen || destAddrs.length != bulkLen || stakingOutputIdxs.length != bulkLen
+                || inclusionHeights.length != bulkLen || stakingAmounts.length != bulkLen
+                || bulkSortedGuardianSignatures.length != bulkLen
+        ) {
+            revert Errors.InvalidLength();
+        }
+        for (uint256 i = 0; i < bulkLen; ++i) {
+            mint(
+                tokens[i],
+                txHashs[i],
+                destAddrs[i],
+                stakingOutputIdxs[i],
+                inclusionHeights[i],
+                stakingAmounts[i],
+                bulkSortedGuardianSignatures[i]
+            );
+        }
+    }
+
     function mint(
         address token,
         bytes32 txHash,
@@ -150,16 +180,16 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         uint256 inclusionHeight,
         uint256 stakingAmount,
         Signature[] calldata sortedGuardianSignatures
-    ) external whenNotPaused {
+    ) public whenNotPaused {
         if (quorum == 0 || sortedGuardianSignatures.length < quorum) revert Errors.DepositNoQuorum();
 
         bytes32 msgHash = _verifySignatures(
             token, txHash, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount, sortedGuardianSignatures
         );
-        if (mintMsgHash[msgHash] != address(0)) {
+        if (mintedMsgHash[msgHash] != address(0)) {
             revert Errors.MsgHashAlreadyMint();
         }
-        mintMsgHash[msgHash] = destAddr;
+        mintedMsgHash[msgHash] = destAddr;
 
         IObeliskNetwork(obeliskNetwork).mint(token, destAddr, stakingAmount);
 
@@ -176,11 +206,7 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         Signature[] memory sigs
     ) internal view returns (bytes32 msgHash) {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        msgHash = keccak256(
-            abi.encodePacked(
-                MINT_MESSAGE_PREFIX, txHash, token, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount
-            )
-        );
+        msgHash = calcMsgHash(token, txHash, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount);
         bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, msgHash));
 
         address prevSignerAddr = address(0);
@@ -190,6 +216,22 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
             if (signerAddr <= prevSignerAddr) revert Errors.SignaturesNotSorted();
             prevSignerAddr = signerAddr;
         }
+    }
+
+    function calcMsgHash(
+        address token,
+        bytes32 txHash,
+        address destAddr,
+        uint256 stakingOutputIdx,
+        uint256 inclusionHeight,
+        uint256 stakingAmount
+    ) public view returns (bytes32 msgHash) {
+        msgHash = keccak256(
+            abi.encodePacked(
+                MINT_MESSAGE_PREFIX, txHash, token, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount
+            )
+        );
+        return msgHash;
     }
 
     /**
@@ -203,7 +245,7 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
      * @notice Contract version
      */
     function version() public pure override returns (uint8) {
-        return 1;
+        return 3;
     }
 
     /**

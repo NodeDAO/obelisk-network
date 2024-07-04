@@ -10,7 +10,7 @@ abstract contract Assets is Initializable, IAssets {
     address[] internal assetList;
     mapping(address => bool) public assetPaused;
 
-    function getAssetList() view public returns(address[] memory) {
+    function getAssetList() public view returns (address[] memory) {
         return assetList;
     }
 
