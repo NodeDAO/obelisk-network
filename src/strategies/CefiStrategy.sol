@@ -64,6 +64,12 @@ contract CefiStrategy is BaseStrategy {
         totalPendingWithdrawal -= _amount;
     }
 
+    function operatingUnderlyingToken(uint256 _amount) external onlyFundManager {
+        address _to = fundVault;
+        underlyingToken.transfer(_to, _amount);
+        emit UnderlyingTokenTransfer(_to, _amount);
+    }
+
     /**
      * @notice Contract type id
      */
