@@ -28,5 +28,6 @@ library Errors {
     error CantRequestWithdrawal();
     error StrategyClosed();
     error StrategyNotWhitelisted();
+    error StrategyNotOpen();
     error TransferFailed();
 }

@@ -93,8 +93,8 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         if (_amount < floorAmount) {
             revert Errors.InvalidAmount();
         }
-        if (status == StrategyStatus.Close) {
-            revert Errors.StrategyClosed();
+        if (status != StrategyStatus.Open) {
+            revert Errors.StrategyNotOpen();
         }
 
         _beforeDeposit(_user, _amount);
