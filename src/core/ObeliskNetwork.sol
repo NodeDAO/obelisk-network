@@ -6,11 +6,10 @@ import "src/interfaces/IObeliskNetwork.sol";
 import "src/modules/Dao.sol";
 import "src/modules/Assets.sol";
 import "src/modules/Version.sol";
-import "src/modules/FundRecovery.sol";
 import "src/modules/WithdrawalRequest.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract ObeliskNetwork is Initializable, Version, Dao, Assets, FundRecovery, WithdrawalRequest, IObeliskNetwork {
+contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalRequest, IObeliskNetwork {
     address public mintSecurityAddr;
 
     modifier onlyMintSecurity() {
@@ -97,18 +96,6 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, FundRecovery, Wi
         _setBlackListAdmin(_blackListAdmin);
     }
 
-    function initiateFundRecovery(address _from, address _to, address _token, uint256 _amount) external onlyDao {
-        if (!_isSupportedAsset(_token)) {
-            revert Errors.AssetNotSupported();
-        }
-
-        _initiateFundRecovery(_from, _to, _token, _amount);
-    }
-
-    function executeFundRecovery(uint256 _requestId) external onlyDao {
-        _executeFundRecovery(_requestId);
-    }
-
     function setWithdrawalDelayBlocks(uint256 _withdrawalDelayBlocks) public onlyDao {
         _setWithdrawalDelayBlocks(_withdrawalDelayBlocks);
     }
@@ -128,7 +115,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, FundRecovery, Wi
      * @notice Contract version
      */
     function version() public pure override returns (uint8) {
-        return 2;
+        return 1;
     }
 
     /**

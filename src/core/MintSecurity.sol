@@ -245,7 +245,7 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
      * @notice Contract version
      */
     function version() public pure override returns (uint8) {
-        return 3;
+        return 1;
     }
 
     /**
