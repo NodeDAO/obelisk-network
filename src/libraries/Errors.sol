@@ -21,6 +21,7 @@ library Errors {
     error DepositNoQuorum();
     error MsgHashAlreadyMint();
     error InvalidAsset();
+    error AssetAlreadyExist();
     error AssetNotSupported();
     error AssetPaused();
     error NoRedeemable();
@@ -28,6 +29,7 @@ library Errors {
     error CantRequestWithdrawal();
     error StrategyClosed();
     error StrategyNotWhitelisted();
-    error StrategyNotOpen();
+    error WithdrawalNotOpen();
+    error DepositNotOpen();
     error TransferFailed();
 }

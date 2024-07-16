@@ -18,7 +18,9 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
     address public fundVault;
     address public fundManager;
     uint256 public floorAmount;
-    StrategyStatus public status;
+
+    StrategyStatus internal depositStatus;
+    StrategyStatus internal withdrawStatus;
 
     IERC20 public underlyingToken;
 
@@ -45,7 +47,8 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         uint256 _floorAmount,
         address _underlyingToken,
         address _strategyToken,
-        StrategyStatus _status
+        StrategyStatus _depositStatus,
+        StrategyStatus _withdrawStatus
     ) internal onlyInitializing {
         __Version_init(_ownerAddr);
         __Dao_init(_dao);
@@ -57,12 +60,26 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         if (_strategyToken != address(0)) {
             strategyToken = _strategyToken;
         }
-        status = _status;
+        depositStatus = _depositStatus;
+        withdrawStatus = _withdrawStatus;
     }
 
-    function setStrategyStatus(StrategyStatus _status) external onlyFundManager {
-        emit StrategyStatusChanged(status, _status);
-        status = _status;
+    function getStrategyStatus() public view returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus) {
+        return (depositStatus, withdrawStatus);
+    }
+
+    function setStrategyStatus(StrategyStatus _depositStatus, StrategyStatus _withdrawStatus)
+        external
+        onlyFundManager
+    {
+        if (_depositStatus != depositStatus) {
+            emit DepositStatusChanged(depositStatus, _depositStatus);
+            depositStatus = _depositStatus;
+        }
+        if (_withdrawStatus != withdrawStatus) {
+            emit WithdrawalStatusChanged(withdrawStatus, _withdrawStatus);
+            withdrawStatus = _withdrawStatus;
+        }
     }
 
     function setStrategySetting(
@@ -93,8 +110,8 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         if (_amount < floorAmount) {
             revert Errors.InvalidAmount();
         }
-        if (status != StrategyStatus.Open) {
-            revert Errors.StrategyNotOpen();
+        if (depositStatus != StrategyStatus.Open) {
+            revert Errors.DepositNotOpen();
         }
 
         _beforeDeposit(_user, _amount);
@@ -104,16 +121,16 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
     }
 
     function requestWithdrawal(address _user, uint256 _amount) external virtual onlyStrategyManager {
-        if (status == StrategyStatus.Open) {
-            revert Errors.NoRedeemable();
+        if (withdrawStatus != StrategyStatus.Open) {
+            revert Errors.WithdrawalNotOpen();
         }
 
         _withdraw(_user, _amount);
     }
 
     function withdraw(address _user, uint256 _amount) external virtual onlyStrategyManager {
-        if (status == StrategyStatus.Open) {
-            revert Errors.NoRedeemable();
+        if (withdrawStatus != StrategyStatus.Open) {
+            revert Errors.WithdrawalNotOpen();
         }
 
         _withdraw(_user, _amount);

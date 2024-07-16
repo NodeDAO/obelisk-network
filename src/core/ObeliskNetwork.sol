@@ -47,7 +47,10 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         IBaseToken(_token).whiteListMint(_mintAmount, _to);
     }
 
-    function requestWithdrawals(address _token, uint256 _withdrawalAmount, bytes memory _withdrawalAddr) external {
+    function requestWithdrawals(address _token, uint256 _withdrawalAmount, bytes memory _withdrawalAddr)
+        external
+        whenNotPaused
+    {
         if (!_isSupportedAsset(_token)) {
             revert Errors.AssetNotSupported();
         }
@@ -71,7 +74,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         }
     }
 
-    function claimWithdrawals(address _receiver, uint256[] memory _requestIds) public {
+    function claimWithdrawals(address _receiver, uint256[] memory _requestIds) public whenNotPaused {
         for (uint256 i = 0; i < _requestIds.length; ++i) {
             uint256 _requestId = _requestIds[i];
 

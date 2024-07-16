@@ -10,10 +10,6 @@ abstract contract Assets is Initializable, IAssets {
     address[] internal assetList;
     mapping(address => bool) public assetPaused;
 
-    function getAssetList() public view returns (address[] memory) {
-        return assetList;
-    }
-
     function __Assets_init(address[] memory _tokenAddrs) internal onlyInitializing {
         for (uint256 i = 0; i < _tokenAddrs.length; ++i) {
             address _token = _tokenAddrs[i];
@@ -22,9 +18,16 @@ abstract contract Assets is Initializable, IAssets {
         }
     }
 
+    function getAssetList() public view returns (address[] memory) {
+        return assetList;
+    }
+
     function _checkAssets(address _token) internal view {
         if (IBaseToken(_token).tokenAdmin() != address(this)) {
             revert Errors.InvalidAsset();
+        }
+        if (_isSupportedAsset(_token)) {
+            revert Errors.AssetAlreadyExist();
         }
     }
 
@@ -61,6 +64,9 @@ abstract contract Assets is Initializable, IAssets {
             if (assetList[i] == _token) {
                 assetList[i] = assetList[_length - 1];
                 assetList.pop();
+                if (assetPaused[_token]) {
+                    assetPaused[_token] = false;
+                }
                 emit AssetRemoved(_token);
                 return;
             }

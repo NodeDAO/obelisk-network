@@ -27,7 +27,8 @@ contract DefiStrategy is BaseStrategy {
             _floorAmount,
             _underlyingToken,
             _strategyToken,
-            StrategyStatus.Redeemable
+            StrategyStatus.Open,
+            StrategyStatus.Close
         );
     }
 

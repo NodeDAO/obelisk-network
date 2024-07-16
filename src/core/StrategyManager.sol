@@ -11,7 +11,7 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 contract StrategyManager is Initializable, Version, Dao, IStrategyManager {
     // strategy
     mapping(address => bool) public strategyIsWhitelisted;
-    address[] public strategyList;
+    address[] internal strategyList;
 
     modifier onlyStrategiesWhitelisted(address _strategy) {
         if (!strategyIsWhitelisted[_strategy]) revert Errors.StrategyNotWhitelisted();
@@ -35,6 +35,10 @@ contract StrategyManager is Initializable, Version, Dao, IStrategyManager {
                 ++i;
             }
         }
+    }
+
+    function getStrategyList() public view returns (address[] memory) {
+        return strategyList;
     }
 
     function getStakerStrategyList(address _user) public view returns (address[] memory, uint256[] memory) {
