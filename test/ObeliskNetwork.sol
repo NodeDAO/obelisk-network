@@ -4,19 +4,24 @@ pragma solidity 0.8.12;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Script.sol";
-import "src/tokens/OBBTC.sol";
+import "src/tokens/OBTC.sol";
+import "src/tokens/OLTC.sol";
 import "src/tokens/NBTCB2.sol";
 import "src/tokens/NBTCBBL.sol";
 import "src/core/ObeliskNetwork.sol";
 import "src/strategies/DefiStrategy.sol";
 import "src/core/MintSecurity.sol";
 import "src/core/StrategyManager.sol";
+import "src/interfaces/IBaseStrategy.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract ObeliskNetworkTest is Test {
     address _dao = address(1000);
+    address _ownerAddr = address(1001);
+    address _blackListAdmin = address(1003);
+    address _fundManager = address(1004);
 
-    OBBTC public _obBTC;
+    OBTC public _obBTC;
     ObeliskNetwork public _obeliskNetwork;
     StrategyManager public _strategyManager;
     MintSecurity public _mintSecurity;
@@ -29,12 +34,11 @@ contract ObeliskNetworkTest is Test {
 
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
 
-        _obBTC = new OBBTC(address(_obeliskNetwork));
+        _obBTC = new OBTC(address(_obeliskNetwork));
 
         console.log("=====obBTC=====", address(_obBTC));
 
         address _mintSecurityImple = address(new MintSecurity());
-        // MINT_MESSAGE_PREFIX 0x5706b75259dd61ada5d917cc9b0e797d76b00ca645bc55beb09d4c8ff153ec16
         _mintSecurity = MintSecurity(payable(new ERC1967Proxy(_mintSecurityImple, "")));
 
         console.log("=====mintSecurity=====", address(_mintSecurity));
@@ -46,9 +50,11 @@ contract ObeliskNetworkTest is Test {
 
         address[] memory _tokenAddrs = new address[](1);
         _tokenAddrs[0] = address(_obBTC);
-        _obeliskNetwork.initialize(_dao, _dao, _dao, address(_mintSecurity), _tokenAddrs);
+        _obeliskNetwork.initialize(_ownerAddr, _dao, _blackListAdmin, address(_mintSecurity), _tokenAddrs);
 
-        _mintSecurity.initialize(_dao, _dao, address(_obeliskNetwork));
+        _mintSecurity.initialize(_ownerAddr, _dao, address(_obeliskNetwork));
+        // MINT_MESSAGE_PREFIX 0x5706b75259dd61ada5d917cc9b0e797d76b00ca645bc55beb09d4c8ff153ec16
+        console.logBytes32(_mintSecurity.MINT_MESSAGE_PREFIX());
 
         address[] memory _guardians = new address[](3);
         _guardians[0] = 0xF5ade6B61BA60B8B82566Af0dfca982169a470Dc;
@@ -57,11 +63,8 @@ contract ObeliskNetworkTest is Test {
         vm.prank(address(_dao));
         _mintSecurity.addGuardians(_guardians, 3);
 
-        vm.prank(address(_dao));
-        _obeliskNetwork.addAsset(address(_obBTC));
-
         address[] memory _strategies = deployStrategys();
-        _strategyManager.initialize(_dao, _dao, _strategies);
+        _strategyManager.initialize(_ownerAddr, _dao, _strategies);
     }
 
     function deployStrategys() internal returns (address[] memory) {
@@ -76,10 +79,10 @@ contract ObeliskNetworkTest is Test {
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
         _defiStrategyB2.initialize(
-            _dao, _dao, address(_strategyManager), _dao, _dao, 10000, address(_obBTC), address(nBTCb2)
+            _ownerAddr, _dao, address(_strategyManager), _fundManager, _dao, 10000, address(_obBTC), address(nBTCb2)
         );
         _defiStrategyBBL.initialize(
-            _dao, _dao, address(_strategyManager), _dao, _dao, 10000, address(_obBTC), address(nBTCbbl)
+            _ownerAddr, _dao, address(_strategyManager), _fundManager, _dao, 10000, address(_obBTC), address(nBTCbbl)
         );
 
         address[] memory _strategies = new address[](2);
@@ -117,6 +120,12 @@ contract ObeliskNetworkTest is Test {
         );
 
         assertEq(_obBTC.balanceOf(destAddr), stakingAmount);
+    }
+
+    function testFailMint() public {
+        vm.prank(address(_dao));
+        _mintSecurity.pause();
+        testMint();
     }
 
     function testFailMint2() public {
@@ -215,11 +224,30 @@ contract ObeliskNetworkTest is Test {
         _obeliskNetwork.requestWithdrawals(address(_obBTC), 10000, _to);
     }
 
+    function testFailPauseRequestWithdraws() public {
+        vm.prank(address(_dao));
+        _obeliskNetwork.pause();
+
+        testRequestWithdraws();
+    }
+
     function testClaimWithdrawals() public {
         testRequestWithdraws();
 
         vm.roll(50500);
-        uint256[] memory _requestIds = new uint256[] (1);
+        uint256[] memory _requestIds = new uint256[](1);
+        _requestIds[0] = 0;
+        _obeliskNetwork.claimWithdrawals(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8, _requestIds);
+    }
+
+    function testFailPauseClaimWithdrawals() public {
+        testRequestWithdraws();
+
+        vm.prank(address(_dao));
+        _obeliskNetwork.pause();
+
+        vm.roll(50500);
+        uint256[] memory _requestIds = new uint256[](1);
         _requestIds[0] = 0;
         _obeliskNetwork.claimWithdrawals(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8, _requestIds);
     }
@@ -227,8 +255,244 @@ contract ObeliskNetworkTest is Test {
     function testFailClaimWithdrawals() public {
         testRequestWithdraws();
 
-        uint256[] memory _requestIds = new uint256[] (1);
+        uint256[] memory _requestIds = new uint256[](1);
         _requestIds[0] = 0;
         _obeliskNetwork.claimWithdrawals(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8, _requestIds);
+    }
+
+    function testFailClaimWithdrawals2() public {
+        testRequestWithdraws();
+        testAddBlackList();
+
+        vm.roll(50500);
+        uint256[] memory _requestIds = new uint256[](1);
+        _requestIds[0] = 0;
+        _obeliskNetwork.claimWithdrawals(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8, _requestIds);
+    }
+
+    function testClaimWithdrawals2() public {
+        testRequestWithdraws();
+        testAddBlackList();
+        testRemoveBlackList();
+
+        vm.roll(50500);
+        uint256[] memory _requestIds = new uint256[](1);
+        _requestIds[0] = 0;
+        _obeliskNetwork.claimWithdrawals(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8, _requestIds);
+    }
+
+    function testAddBlackList() public {
+        vm.prank(_blackListAdmin);
+        _obeliskNetwork.addBlackList(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        assertTrue(_obeliskNetwork.isBlackListed(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8));
+    }
+
+    function testRemoveBlackList() public {
+        vm.prank(_blackListAdmin);
+        _obeliskNetwork.removeBlackList(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        assertTrue(!_obeliskNetwork.isBlackListed(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8));
+    }
+
+    function testFailSetBlackListAdmin() public {
+        _obeliskNetwork.setBlackListAdmin(address(1));
+    }
+
+    function testSetBlackListAdmin() public {
+        vm.prank(_dao);
+        _obeliskNetwork.setBlackListAdmin(address(1));
+        assertEq(_obeliskNetwork.blackListAdmin(), address(1));
+    }
+
+    function testAddAsset() public returns (address) {
+        OLTC _oltc = new OLTC(address(_obeliskNetwork));
+        vm.prank(_dao);
+        _obeliskNetwork.addAsset(address(_oltc));
+        return address(_oltc);
+    }
+
+    function testFailAddAsset() public {
+        vm.prank(_dao);
+        _obeliskNetwork.addAsset(address(1));
+    }
+
+    function testFailAddAsset2() public {
+        OLTC _oltc = new OLTC(address(_obeliskNetwork));
+        _obeliskNetwork.addAsset(address(_oltc));
+    }
+
+    function testFailAddAsset3() public {
+        address _oltc = testAddAsset();
+        vm.prank(_dao);
+        _obeliskNetwork.addAsset(address(_oltc));
+    }
+
+    function testGetAssetList() public {
+        address _oltc = testAddAsset();
+        address[] memory assetList = _obeliskNetwork.getAssetList();
+
+        assertEq(assetList.length, 2);
+        assertEq(assetList[0], address(_obBTC));
+        assertEq(assetList[1], _oltc);
+    }
+
+    function testRemoveAsset() public {
+        address _oltc = testAddAsset();
+        vm.prank(_dao);
+        _obeliskNetwork.removeAsset(address(_oltc));
+        address[] memory assetList = _obeliskNetwork.getAssetList();
+        assertEq(assetList.length, 1);
+        assertEq(assetList[0], address(_obBTC));
+    }
+
+    function testSetAssetStatus() public {
+        address _oltc = testAddAsset();
+        assertTrue(!_obeliskNetwork.assetPaused(_oltc));
+        vm.prank(_dao);
+        _obeliskNetwork.setAssetStatus(address(_oltc), false);
+        assertTrue(!_obeliskNetwork.assetPaused(_oltc));
+        vm.prank(_dao);
+        _obeliskNetwork.setAssetStatus(address(_oltc), true);
+        assertTrue(_obeliskNetwork.assetPaused(_oltc));
+        vm.prank(_dao);
+        _obeliskNetwork.removeAsset(address(_oltc));
+        address[] memory assetList = _obeliskNetwork.getAssetList();
+        assertEq(assetList.length, 1);
+        assertEq(assetList[0], address(_obBTC));
+        assertTrue(!_obeliskNetwork.assetPaused(_oltc));
+    }
+
+    function testSetWithdrawalDelayBlocks() public {
+        assertEq(_obeliskNetwork.withdrawalDelayBlocks(), 50400);
+        vm.prank(_dao);
+        _obeliskNetwork.setWithdrawalDelayBlocks(20);
+        assertEq(_obeliskNetwork.withdrawalDelayBlocks(), 20);
+    }
+
+    function testFailSetWithdrawalDelayBlocks() public {
+        vm.prank(_dao);
+        _obeliskNetwork.setWithdrawalDelayBlocks(72001);
+    }
+
+    function testGetGuardianQuorum() public {
+        assertEq(_mintSecurity.getGuardianQuorum(), 3);
+        vm.prank(_dao);
+        _mintSecurity.setGuardianQuorum(2);
+        assertEq(_mintSecurity.getGuardianQuorum(), 2);
+    }
+
+    function testGetGuardians() public view {
+        address[] memory _guardians = _mintSecurity.getGuardians();
+        assertEq(_guardians[0], 0xF5ade6B61BA60B8B82566Af0dfca982169a470Dc);
+        assertEq(_guardians[1], 0xc214f4fBb7C9348eF98CC09c83d528E3be2b63A5);
+        assertEq(_guardians[2], 0xd7189759502ec8bb475e707aCB1C6A4D210e0214);
+        assertTrue(_mintSecurity.isGuardian(0xF5ade6B61BA60B8B82566Af0dfca982169a470Dc));
+        assertTrue(_mintSecurity.isGuardian(0xc214f4fBb7C9348eF98CC09c83d528E3be2b63A5));
+        assertTrue(_mintSecurity.isGuardian(0xd7189759502ec8bb475e707aCB1C6A4D210e0214));
+        assertEq(_mintSecurity.getGuardianIndex(0xF5ade6B61BA60B8B82566Af0dfca982169a470Dc), 0);
+        assertEq(_mintSecurity.getGuardianIndex(0xc214f4fBb7C9348eF98CC09c83d528E3be2b63A5), 1);
+        assertEq(_mintSecurity.getGuardianIndex(0xd7189759502ec8bb475e707aCB1C6A4D210e0214), 2);
+        assertEq(_mintSecurity.getGuardianIndex(address(1)), -1);
+    }
+
+    function testFailAddGuardian() public {
+        _mintSecurity.addGuardian(address(1), 4);
+    }
+
+    function testAddGuardian() public {
+        vm.prank(_dao);
+        _mintSecurity.addGuardian(address(1), 4);
+        assertEq(_mintSecurity.getGuardianQuorum(), 4);
+        assertEq(_mintSecurity.getGuardianIndex(address(1)), 3);
+    }
+
+    function testFailremoveGuardian() public {
+        testAddGuardian();
+        _mintSecurity.removeGuardian(address(1), 3);
+    }
+
+    function testFailremoveGuardian2() public {
+        testAddGuardian();
+        vm.prank(_dao);
+        _mintSecurity.removeGuardian(address(2), 3);
+    }
+
+    function testremoveGuardian() public {
+        testAddGuardian();
+        vm.prank(_dao);
+        _mintSecurity.removeGuardian(address(1), 3);
+        assertEq(_mintSecurity.getGuardianQuorum(), 3);
+        assertEq(_mintSecurity.getGuardianIndex(address(1)), -1);
+    }
+
+    function testGetStrategyList() public view {
+        address[] memory strategyList = _strategyManager.getStrategyList();
+        assertEq(strategyList.length, 2);
+        assertEq(address(_defiStrategyB2), strategyList[0]);
+        assertEq(address(_defiStrategyBBL), strategyList[1]);
+    }
+
+    function testAddStrategies() public {
+        address[] memory _strategies = deployStrategys();
+        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[0]), false);
+        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[1]), false);
+
+        vm.prank(_dao);
+        _strategyManager.addStrategies(_strategies);
+        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[0]), true);
+        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[1]), true);
+        address[] memory strategyList = _strategyManager.getStrategyList();
+        assertEq(strategyList.length, 4);
+
+        vm.prank(_dao);
+        _strategyManager.removeStrategiesFromDepositWhitelist(_strategies);
+        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[0]), false);
+        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[1]), false);
+        strategyList = _strategyManager.getStrategyList();
+        assertEq(strategyList.length, 2);
+    }
+
+    function testDeposit() public {
+        testMint();
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _obBTC.approve(address(_defiStrategyB2), 100000);
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _obBTC.approve(address(_defiStrategyBBL), 100000);
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _strategyManager.deposit(address(_defiStrategyB2), 100000);
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _strategyManager.deposit(address(_defiStrategyBBL), 100000);
+        assertEq(_obBTC.balanceOf(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8), 120000000 - 100000 * 2);
+    }
+
+    function testFailDeposit() public {
+        testMint();
+        vm.prank(_fundManager);
+        _defiStrategyBBL.setStrategyStatus(IBaseStrategy.StrategyStatus.Close, IBaseStrategy.StrategyStatus.Close);
+        vm.prank(_fundManager);
+        _defiStrategyB2.setStrategyStatus(IBaseStrategy.StrategyStatus.Close, IBaseStrategy.StrategyStatus.Close);
+
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _obBTC.approve(address(_defiStrategyB2), 100000);
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _obBTC.approve(address(_defiStrategyBBL), 100000);
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _strategyManager.deposit(address(_defiStrategyB2), 100000);
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _strategyManager.deposit(address(_defiStrategyBBL), 100000);
+        assertEq(_obBTC.balanceOf(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8), 120000000 - 100000 * 2);
+    }
+
+    function testFailWithdrawal() public {
+        testDeposit();
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _strategyManager.withdraw(address(_defiStrategyBBL), 100000);
+    }
+
+    function testWithdrawal() public {
+        testDeposit();
+        vm.prank(_fundManager);
+        _defiStrategyBBL.setStrategyStatus(IBaseStrategy.StrategyStatus.Open, IBaseStrategy.StrategyStatus.Open);
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _strategyManager.withdraw(address(_defiStrategyBBL), 100000);
     }
 }
