@@ -4,6 +4,7 @@ pragma solidity 0.8.12;
 import "src/libraries/Errors.sol";
 import "src/modules/BlackList.sol";
 import "src/interfaces/IWithdrawalRequest.sol";
+import "src/interfaces/IMintStrategy.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -12,11 +13,14 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
  * @notice Provides basic functions for withdrawal orders.
  */
 abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequest {
+    address public constant nativeBTCStrategy = 0x000000000000000000000000000000000000000b;
+
     struct WithdrawalInfo {
         uint96 withdrawalHeight;
         uint32 claimed;
         uint128 withdrawalAmount;
         address token;
+        address strategy;
         bytes withdrawalAddr;
     }
 
@@ -59,7 +63,9 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
             return false;
         }
 
-        if (block.number < _userWithdrawals[_requestId].withdrawalHeight + withdrawalDelayBlocks) {
+        (uint256 _withdrawalDelayBlocks,) = getWithdrawalDelayBlocks(_userWithdrawals[_requestId].strategy);
+
+        if (block.number < _userWithdrawals[_requestId].withdrawalHeight + _withdrawalDelayBlocks) {
             return false;
         }
 
@@ -72,6 +78,7 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
      * @param _withdrawalAmount withdrawal amount
      */
     function _requestWithdrawals(
+        address _strategy,
         address _token,
         address _receiver,
         uint256 _withdrawalAmount,
@@ -84,6 +91,7 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
                 claimed: 0,
                 withdrawalAmount: uint128(_withdrawalAmount),
                 token: _token,
+                strategy: _strategy,
                 withdrawalAddr: _withdrawalAddr
             })
         );
@@ -93,6 +101,18 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
         );
     }
 
+    function getWithdrawalDelayBlocks(address _strategy) internal view returns (uint256, bool) {
+        uint256 _withdrawalDelayBlocks = 0;
+        bool isNativeStrategy = false;
+        if (_strategy == nativeBTCStrategy) {
+            _withdrawalDelayBlocks = withdrawalDelayBlocks;
+            isNativeStrategy = true;
+        } else {
+            _withdrawalDelayBlocks = IMintStrategy(_strategy).getWithdrawalDelayBlocks();
+        }
+        return (_withdrawalDelayBlocks, isNativeStrategy);
+    }
+
     /**
      * @notice Claim withdrawal
      * @param _receiver fund recipient
@@ -100,12 +120,20 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
      */
     function _claimWithdrawals(address _receiver, uint256 _requestId) internal returns (uint256, address) {
         WithdrawalInfo memory _userWithdrawal = withdrawalQueue[_receiver][_requestId];
+        (uint256 _withdrawalDelayBlocks, bool isNativeStrategy) = getWithdrawalDelayBlocks(_userWithdrawal.strategy);
+
         uint256 _blockNumber = block.number;
         if (
             _userWithdrawal.withdrawalAmount == 0 || _userWithdrawal.claimed != 0 || isBlackListed[_receiver]
-                || _blockNumber < _userWithdrawal.withdrawalHeight + withdrawalDelayBlocks
+                || _blockNumber < _userWithdrawal.withdrawalHeight + _withdrawalDelayBlocks
         ) {
             revert Errors.InvalidRequestId();
+        }
+
+        if (!isNativeStrategy) {
+            IMintStrategy(_userWithdrawal.strategy).withdraw(
+                _userWithdrawal.token, _receiver, _userWithdrawal.withdrawalAmount
+            );
         }
 
         withdrawalQueue[_receiver][_requestId].claimed = 1;

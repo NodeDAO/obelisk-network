@@ -3,13 +3,15 @@ pragma solidity 0.8.12;
 
 import "src/libraries/Errors.sol";
 import "src/interfaces/IObeliskNetwork.sol";
+import "src/interfaces/IMintStrategy.sol";
 import "src/modules/Dao.sol";
 import "src/modules/Assets.sol";
 import "src/modules/Version.sol";
+import "src/modules/Strategy.sol";
 import "src/modules/WithdrawalRequest.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalRequest, IObeliskNetwork {
+contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalRequest, Strategy, IObeliskNetwork {
     address public mintSecurityAddr;
 
     modifier onlyMintSecurity() {
@@ -26,13 +28,14 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         address _dao,
         address _blackListAdmin,
         address _mintSecurityAddr,
-        address[] memory _tokenAddrs
+        address[] memory _tokenAddrs,
+        address[] calldata _mintStrategies
     ) public initializer {
         __Version_init(_ownerAddr);
         __Dao_init(_dao);
         __Assets_init(_tokenAddrs);
         __WithdrawalRequest_init(50400, _blackListAdmin);
-
+        __Strategy_init(_mintStrategies);
         mintSecurityAddr = _mintSecurityAddr;
     }
 
@@ -47,10 +50,23 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         IBaseToken(_token).whiteListMint(_mintAmount, _to);
     }
 
-    function requestWithdrawals(address _token, uint256 _withdrawalAmount, bytes memory _withdrawalAddr)
-        external
-        whenNotPaused
-    {
+    function deposit(address _strategy, address _token, uint256 _amount) external whenNotPaused {
+        _checkStrategiesWhitelisted(_strategy);
+        address _user = msg.sender;
+        uint256 _mintAmount = IMintStrategy(_strategy).deposit(_token, _user, _amount);
+        IBaseToken(_token).whiteListMint(_mintAmount, _user);
+    }
+
+    function requestWithdrawals(
+        address _strategy,
+        address _token,
+        uint256 _withdrawalAmount,
+        bytes memory _withdrawalAddr
+    ) external whenNotPaused {
+        if (_strategy != nativeBTCStrategy) {
+            _checkStrategiesWhitelisted(_strategy);
+        }
+
         if (!_isSupportedAsset(_token)) {
             revert Errors.AssetNotSupported();
         }
@@ -60,7 +76,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         if (!ok) {
             revert Errors.TransferFailed();
         }
-        _requestWithdrawals(_token, _sender, _withdrawalAmount, _withdrawalAddr);
+        _requestWithdrawals(_strategy, _token, _sender, _withdrawalAmount, _withdrawalAddr);
     }
 
     function bulkClaimWithdrawals(address[] memory _receivers, uint256[][] memory _requestIds) external {
@@ -101,6 +117,14 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
 
     function setWithdrawalDelayBlocks(uint256 _withdrawalDelayBlocks) public onlyDao {
         _setWithdrawalDelayBlocks(_withdrawalDelayBlocks);
+    }
+
+    function addStrategies(address[] calldata _strategies) external onlyDao {
+        _addStrategies(_strategies);
+    }
+
+    function removeStrategies(address[] calldata _strategies) external onlyDao {
+        _removeStrategies(_strategies);
     }
 
     function setDao(address _dao) public onlyOwner {

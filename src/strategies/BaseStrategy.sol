@@ -138,7 +138,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
 
     function _withdraw(address _user, uint256 _amount) internal {
         _removeShares(_user, _amount);
-        _afterWithdrawal(_user, _amount);
+        _transfer(_user, _amount);
         emit Withdrawal(address(this), _user, _amount);
     }
 
@@ -146,7 +146,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         underlyingToken.safeTransferFrom(_user, address(this), _amount);
     }
 
-    function _afterWithdrawal(address _user, uint256 _amountToSend) internal {
+    function _transfer(address _user, uint256 _amountToSend) internal {
         underlyingToken.safeTransfer(_user, _amountToSend);
     }
 
@@ -178,20 +178,6 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         }
 
         return IERC20(strategyToken).balanceOf(_user);
-    }
-
-    /**
-     * @notice stop protocol
-     */
-    function pause() external onlyDao {
-        _pause();
-    }
-
-    /**
-     * @notice start protocol
-     */
-    function unpause() external onlyDao {
-        _unpause();
     }
 
     /**

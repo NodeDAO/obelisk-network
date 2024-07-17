@@ -4,20 +4,12 @@ pragma solidity 0.8.12;
 import "src/libraries/Errors.sol";
 import "src/modules/Version.sol";
 import "src/modules/Dao.sol";
+import "src/modules/Strategy.sol";
 import "src/interfaces/IStrategyManager.sol";
 import "src/interfaces/IBaseStrategy.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract StrategyManager is Initializable, Version, Dao, IStrategyManager {
-    // strategy
-    mapping(address => bool) public strategyIsWhitelisted;
-    address[] internal strategyList;
-
-    modifier onlyStrategiesWhitelisted(address _strategy) {
-        if (!strategyIsWhitelisted[_strategy]) revert Errors.StrategyNotWhitelisted();
-        _;
-    }
-
+contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyManager {
     constructor() {
         _disableInitializers();
     }
@@ -25,20 +17,7 @@ contract StrategyManager is Initializable, Version, Dao, IStrategyManager {
     function initialize(address _ownerAddr, address _dao, address[] calldata _strategies) public initializer {
         __Version_init(_ownerAddr);
         __Dao_init(_dao);
-
-        uint256 strategiesLength = _strategies.length;
-        for (uint256 i = 0; i < strategiesLength;) {
-            strategyIsWhitelisted[_strategies[i]] = true;
-            strategyList.push(_strategies[i]);
-            emit StrategyAddedToWhitelist(_strategies[i]);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function getStrategyList() public view returns (address[] memory) {
-        return strategyList;
+        __Strategy_init(_strategies);
     }
 
     function getStakerStrategyList(address _user) public view returns (address[] memory, uint256[] memory) {
@@ -71,73 +50,27 @@ contract StrategyManager is Initializable, Version, Dao, IStrategyManager {
     }
 
     function addStrategies(address[] calldata _strategies) external onlyDao {
-        uint256 strategiesLength = _strategies.length;
-        for (uint256 i = 0; i < strategiesLength;) {
-            if (!strategyIsWhitelisted[_strategies[i]]) {
-                strategyIsWhitelisted[_strategies[i]] = true;
-                strategyList.push(_strategies[i]);
-                emit StrategyAddedToWhitelist(_strategies[i]);
-            }
-            unchecked {
-                ++i;
-            }
-        }
+        _addStrategies(_strategies);
     }
 
-    function removeStrategiesFromDepositWhitelist(address[] calldata _strategies) external onlyDao {
-        uint256 strategiesLength = _strategies.length;
-        for (uint256 i = 0; i < strategiesLength;) {
-            if (strategyIsWhitelisted[_strategies[i]]) {
-                strategyIsWhitelisted[_strategies[i]] = false;
-                _removeStrategyList(_strategies[i]);
-                emit StrategyRemovedFromWhitelist(_strategies[i]);
-            }
-            unchecked {
-                ++i;
-            }
-        }
+    function removeStrategies(address[] calldata _strategies) external onlyDao {
+        _removeStrategies(_strategies);
     }
 
-    function _removeStrategyList(address _strategy) internal {
-        uint256 _strategyListength = strategyList.length;
-        for (uint256 i = 0; i < _strategyListength;) {
-            if (strategyList[i] == _strategy) {
-                strategyList[i] = strategyList[_strategyListength - 1];
-                strategyList.pop();
-                return;
-            }
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function deposit(address _strategy, uint256 _amount)
-        external
-        onlyStrategiesWhitelisted(_strategy)
-        whenNotPaused
-        nonReentrant
-    {
+    function deposit(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
+        _checkStrategiesWhitelisted(_strategy);
         IBaseStrategy(_strategy).deposit(msg.sender, _amount);
         emit UserDeposit(_strategy, msg.sender, _amount, block.number);
     }
 
-    function requestWithdrawal(address _strategy, uint256 _amount)
-        external
-        onlyStrategiesWhitelisted(_strategy)
-        whenNotPaused
-        nonReentrant
-    {
+    function requestWithdrawal(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
+        _checkStrategiesWhitelisted(_strategy);
         IBaseStrategy(_strategy).requestWithdrawal(msg.sender, _amount);
         emit UserWithdrawal(_strategy, msg.sender, _amount, block.number);
     }
 
-    function withdraw(address _strategy, uint256 _amount)
-        external
-        onlyStrategiesWhitelisted(_strategy)
-        whenNotPaused
-        nonReentrant
-    {
+    function withdraw(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
+        _checkStrategiesWhitelisted(_strategy);
         IBaseStrategy(_strategy).withdraw(msg.sender, _amount);
         emit UserRequestWithdrawal(_strategy, msg.sender, _amount, block.number);
     }

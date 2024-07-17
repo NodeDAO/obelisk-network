@@ -19,7 +19,7 @@ abstract contract BaseToken is ERC20, Ownable, BlackList, IBaseToken {
         tokenAdmin = _tokenAdmin;
     }
 
-    function decimals() public pure override returns (uint8) {
+    function decimals() public pure virtual override returns (uint8) {
         return 8;
     }
 

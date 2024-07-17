@@ -61,7 +61,7 @@ contract CefiStrategy is BaseStrategy {
 
     function operatingUnderlyingToken(uint256 _amount) external onlyFundManager {
         address _to = fundVault;
-        underlyingToken.transfer(_to, _amount);
+        _transfer(_to, _amount);
         emit UnderlyingTokenTransfer(_to, _amount);
     }
 

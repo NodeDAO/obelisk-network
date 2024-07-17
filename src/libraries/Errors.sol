@@ -32,4 +32,5 @@ library Errors {
     error WithdrawalNotOpen();
     error DepositNotOpen();
     error TransferFailed();
+    error AssetDismatch();
 }
