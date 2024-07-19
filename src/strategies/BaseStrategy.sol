@@ -27,6 +27,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
     address public strategyToken;
     mapping(address => uint256) internal userShares;
     uint256 public totalShares;
+    uint256 public sharesLimit;
 
     modifier onlyStrategyManager() {
         if (msg.sender != strategyManager) revert Errors.PermissionDenied();
@@ -47,6 +48,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         uint256 _floorAmount,
         address _underlyingToken,
         address _strategyToken,
+        uint256 _sharesLimit,
         StrategyStatus _depositStatus,
         StrategyStatus _withdrawStatus
     ) internal onlyInitializing {
@@ -62,6 +64,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         }
         depositStatus = _depositStatus;
         withdrawStatus = _withdrawStatus;
+        sharesLimit = _sharesLimit;
     }
 
     function getStrategyStatus() public view returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus) {
@@ -86,7 +89,8 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         address _strategyManager,
         address _fundManager,
         address _fundVault,
-        uint256 _floorAmount
+        uint256 _floorAmount,
+        uint256 _sharesLimit
     ) external onlyDao {
         if (_strategyManager != address(0)) {
             emit StrategyManagerChanged(strategyManager, _strategyManager);
@@ -104,12 +108,21 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
             emit FloorAmountChanged(floorAmount, _floorAmount);
             floorAmount = _floorAmount;
         }
+        if (_sharesLimit != 0) {
+            emit SharesLimitChanged(sharesLimit, _sharesLimit);
+            sharesLimit = _sharesLimit;
+        }
     }
 
     function deposit(address _user, uint256 _amount) external onlyStrategyManager {
         if (_amount < floorAmount) {
             revert Errors.InvalidAmount();
         }
+
+        if (totalShares + _amount > sharesLimit) {
+            revert Errors.ExceedDepositLimit();
+        }
+
         if (depositStatus != StrategyStatus.Open) {
             revert Errors.DepositNotOpen();
         }

@@ -15,6 +15,7 @@ contract DefiStrategy is BaseStrategy {
         address _fundManager,
         address _fundVault,
         uint256 _floorAmount,
+        uint256 _sharesLimit,
         address _underlyingToken,
         address _strategyToken
     ) public initializer {
@@ -27,6 +28,7 @@ contract DefiStrategy is BaseStrategy {
             _floorAmount,
             _underlyingToken,
             _strategyToken,
+            _sharesLimit,
             StrategyStatus.Open,
             StrategyStatus.Close
         );
