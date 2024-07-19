@@ -14,6 +14,7 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
  */
 abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequest {
     address public constant nativeBTCStrategy = 0x000000000000000000000000000000000000000b;
+    bool public nativeBTCPaused;
 
     struct WithdrawalInfo {
         uint96 withdrawalHeight;
@@ -38,6 +39,7 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
     {
         withdrawalDelayBlocks = _withdrawalDelayBlocks;
         __BlackList_init(_blackListAdmin);
+        nativeBTCPaused = false;
     }
 
     /**
@@ -149,6 +151,11 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
         );
 
         return (_userWithdrawal.withdrawalAmount, _userWithdrawal.token);
+    }
+
+    function _setNativeBTCPaused(bool _status) internal {
+        emit NativeBTCPausedChanged(nativeBTCPaused, _status);
+        nativeBTCPaused = _status;
     }
 
     /**

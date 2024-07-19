@@ -33,4 +33,6 @@ library Errors {
     error DepositNotOpen();
     error TransferFailed();
     error AssetDismatch();
+    error ExceedDepositLimit();
+    error NativeBTCPaused();
 }

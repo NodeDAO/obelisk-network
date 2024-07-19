@@ -55,16 +55,21 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         address _user = msg.sender;
         uint256 _mintAmount = IMintStrategy(_strategy).deposit(_token, _user, _amount);
         IBaseToken(_token).whiteListMint(_mintAmount, _user);
+        emit Deposit(_strategy, _token, _mintAmount);
     }
 
     function requestWithdrawals(
         address _strategy,
         address _token,
         uint256 _withdrawalAmount,
-        bytes memory _withdrawalAddr
+        bytes memory _withdrawalAddr // If the _strategy is not nativeBTCStrategy, it can be empty
     ) external whenNotPaused {
         if (_strategy != nativeBTCStrategy) {
             _checkStrategiesWhitelisted(_strategy);
+        } else {
+            if (nativeBTCPaused) {
+                revert Errors.NativeBTCPaused();
+            }
         }
 
         if (!_isSupportedAsset(_token)) {
@@ -117,6 +122,10 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
 
     function setWithdrawalDelayBlocks(uint256 _withdrawalDelayBlocks) public onlyDao {
         _setWithdrawalDelayBlocks(_withdrawalDelayBlocks);
+    }
+
+    function setNativeBTCPausedStatus(bool _status) public onlyDao {
+        _setNativeBTCPaused(_status);
     }
 
     function addStrategies(address[] calldata _strategies) external onlyDao {

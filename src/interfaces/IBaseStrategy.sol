@@ -19,6 +19,7 @@ interface IBaseStrategy {
     event FundManagerChanged(address fundManager, address _fundManager);
     event FundVaultChanged(address fundVault, address _fundVault);
     event FloorAmountChanged(uint256 floorAmount, uint256 _floorAmount);
+    event SharesLimitChanged(uint256 sharesLimit, uint256 _sharesLimit);
     event Withdrawal(address _strategy, address _user, uint256 _amount);
     event RequestWithdrawal(address _strategy, address _user, uint256 _amount);
     event Deposit(address _strategy, address _user, uint256 _amount);

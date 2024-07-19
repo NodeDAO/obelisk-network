@@ -3,6 +3,7 @@ pragma solidity 0.8.12;
 
 interface IWithdrawalRequest {
     event WithdrawalDelayChanged(uint256 _oldWithdrawalDelayBlocks, uint256 _withdrawalDelayBlocks);
+    event NativeBTCPausedChanged(bool _oldStatus, bool _status);
     event WithdrawalsRequest(
         address _token,
         address _receiver,
