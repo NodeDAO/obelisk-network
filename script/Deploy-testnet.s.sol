@@ -30,7 +30,6 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
 
         OBTC _oBTC = new OBTC(address(_obeliskNetwork));
-
         console.log("=====oBTC=====", address(_oBTC));
 
         address _mintSecurityImple = address(new MintSecurity());
@@ -43,46 +42,71 @@ contract HoleskyDeployObelisk is Script {
 
         console.log("=====strategyManager=====", address(_strategyManager));
 
-        address _mintStrategyImple = address(new MintStrategy());
-        MintStrategy _mintStrategy = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
-
-        console.log("=====mintStrategy=====", address(_mintStrategy));
-
-        address _testBTC = address(new TestToken("test BTC", "tBTC", _dao));
-        _mintStrategy.initialize(_dao, _dao, address(_obeliskNetwork), _dao, address(_testBTC), address(_oBTC), 10);
-
-        address[] memory _mintStrategies = new address[](1);
-        _mintStrategies[0] = address(_mintStrategy);
-
+        address[] memory _mintStrategies = deployMintStrategys(address(_obeliskNetwork), address(_oBTC));
         address[] memory _tokenAddrs = new address[](1);
         _tokenAddrs[0] = address(_oBTC);
         _obeliskNetwork.initialize(_dao, _dao, _dao, address(_mintSecurity), _tokenAddrs, _mintStrategies);
 
-        _mintSecurity.initialize(_dao, _dao, address(_obeliskNetwork));
+        // _mintSecurity.initialize(_dao, _dao, address(_obeliskNetwork));
 
-        address[] memory _strategies = deployStrategys(address(_oBTC), address(_strategyManager));
+        address b2 = deployStrategysB2(address(_oBTC), address(_strategyManager));
+        address bbl = deployStrategysBBL(address(_oBTC), address(_strategyManager));
+        address[] memory _strategies = new address[](2);
+        _strategies[0] = address(b2);
+        _strategies[1] = address(bbl);
+
         _strategyManager.initialize(_dao, _dao, _strategies);
 
         vm.stopBroadcast();
     }
 
-    function deployStrategys(address _obBTC, address _strategyManager) internal returns (address[] memory) {
+    function deployMintStrategys(address _obeliskNetwork, address _oBTC) internal returns (address[] memory) {
+        address _mintStrategyImple = address(new MintStrategy());
+        MintStrategy _mintStrategy = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
+        MintStrategy _mintStrategy2 = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
+
+        console.log("=====mintStrategy=====", address(_mintStrategy));
+        console.log("=====mintStrategy2=====", address(_mintStrategy2));
+
+        address _testBTC = address(new TestToken("test BTC", "tBTC", _dao));
+        _mintStrategy.initialize(_dao, _dao, address(_obeliskNetwork), _dao, address(_testBTC), address(_oBTC), 10);
+        address _testBTC2 = address(new TestToken2("test BTC18", "tBTC18", _dao));
+        _mintStrategy2.initialize(_dao, _dao, address(_obeliskNetwork), _dao, address(_testBTC2), address(_oBTC), 10);
+
+        console.log("=====testBTC=====", address(_testBTC));
+        console.log("=====testBTC2=====", address(_testBTC2));
+
+        address[] memory _mintStrategies = new address[](2);
+        _mintStrategies[0] = address(_mintStrategy);
+        _mintStrategies[1] = address(_mintStrategy2);
+        return _mintStrategies;
+    }
+
+    function deployStrategysB2(address _obBTC, address _strategyManager) internal returns (address) {
         address _defiStrategyImple = address(new DefiStrategy());
         DefiStrategy _defiStrategyB2 = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
-        DefiStrategy _defiStrategyBBL = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
         console.log("=====defiStrategyB2=====", address(_defiStrategyB2));
-        console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
         OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2));
-        OYBTCBBL nBTCbbl = new OYBTCBBL(address(_defiStrategyBBL));
         console.log("=====nBTCb2=====", address(nBTCb2));
+
+        _defiStrategyB2.initialize(
+            _dao, _dao, _strategyManager, _dao, _dao, 10000, 10000000000000, address(_obBTC), address(nBTCb2)
+        );
+
+        return address(_defiStrategyB2);
+    }
+
+    function deployStrategysBBL(address _obBTC, address _strategyManager) internal returns (address) {
+        address _defiStrategyImple = address(new DefiStrategy());
+        DefiStrategy _defiStrategyBBL = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
+        console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
+        OYBTCBBL nBTCbbl = new OYBTCBBL(address(_defiStrategyBBL));
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
-        _defiStrategyB2.initialize(_dao, _dao, _strategyManager, _dao, _dao, 10000, address(_obBTC), address(nBTCb2));
-        _defiStrategyBBL.initialize(_dao, _dao, _strategyManager, _dao, _dao, 10000, address(_obBTC), address(nBTCbbl));
+        _defiStrategyBBL.initialize(
+            _dao, _dao, _strategyManager, _dao, _dao, 10000, 10000000000000, address(_obBTC), address(nBTCbbl)
+        );
 
-        address[] memory _strategies = new address[](2);
-        _strategies[0] = address(_defiStrategyB2);
-        _strategies[1] = address(_defiStrategyBBL);
-        return _strategies;
+        return address(_defiStrategyBBL);
     }
 }

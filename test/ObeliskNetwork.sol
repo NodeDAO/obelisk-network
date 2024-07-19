@@ -104,10 +104,26 @@ contract ObeliskNetworkTest is Test {
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
         _defiStrategyB2.initialize(
-            _ownerAddr, _dao, address(_strategyManager), _fundManager, _dao, 10000, address(_oBTC), address(nBTCb2)
+            _ownerAddr,
+            _dao,
+            address(_strategyManager),
+            _fundManager,
+            _dao,
+            10000,
+            10000000000000,
+            address(_oBTC),
+            address(nBTCb2)
         );
         _defiStrategyBBL.initialize(
-            _ownerAddr, _dao, address(_strategyManager), _fundManager, _dao, 10000, address(_oBTC), address(nBTCbbl)
+            _ownerAddr,
+            _dao,
+            address(_strategyManager),
+            _fundManager,
+            _dao,
+            10000,
+            10000000000000,
+            address(_oBTC),
+            address(nBTCbbl)
         );
 
         address[] memory _strategies = new address[](2);
