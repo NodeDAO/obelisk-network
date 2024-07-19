@@ -88,7 +88,7 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
 
         _deposit(_user, _depositAmount);
 
-        emit Deposit(address(this), _user, _depositAmount);
+        emit Deposit(address(this), address(underlyingToken), _user, _depositAmount);
         return _mintAmount;
     }
 
@@ -106,6 +106,7 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
         uint256 _transferAmount = convertAmount(_amount, sourceDecimals, targetDecimals);
 
         _withdrawal(_user, _transferAmount);
+        emit Withdrawal(address(this), address(underlyingToken), _user, _transferAmount);
     }
 
     function _deposit(address _user, uint256 _amount) internal {
@@ -131,6 +132,10 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
             emit WithdrawalStatusChanged(withdrawStatus, _withdrawStatus);
             withdrawStatus = _withdrawStatus;
         }
+    }
+
+    function getStrategyStatus() public view returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus) {
+        return (depositStatus, withdrawStatus);
     }
 
     function setFundVault(address _fundVault) external onlyDao {

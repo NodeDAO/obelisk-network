@@ -5,7 +5,6 @@ interface IMintStrategy {
     enum StrategyStatus {
         Close, // 0
         Open // 1
-
     }
 
     function getWithdrawalDelayBlocks() external view returns (uint256);
@@ -16,7 +15,7 @@ interface IMintStrategy {
     event WithdrawalStatusChanged(StrategyStatus _oldStatus, StrategyStatus _status);
     event ObeliskNetworkChanged(address obeliskNetwork, address _obeliskNetwork);
     event FundVaultChanged(address fundVault, address _fundVault);
-    event Withdrawal(address _strategy, address _user, uint256 _amount);
-    event Deposit(address _strategy, address _user, uint256 _amount);
+    event Withdrawal(address _strategy, address _underlyingToken, address _user, uint256 _amount);
+    event Deposit(address _strategy, address _underlyingToken, address _user, uint256 _amount);
     event UnderlyingTokenTransfer(address _to, uint256 _amount);
 }
