@@ -5,6 +5,11 @@ import "src/libraries/Errors.sol";
 import "src/interfaces/IStrategy.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/**
+ * @title Strategy Management
+ * @author Obelisk
+ * @notice Provides management strategy functions
+ */
 abstract contract Strategy is Initializable, IStrategy {
     mapping(address => bool) public strategyIsWhitelisted;
     address[] internal strategyList;

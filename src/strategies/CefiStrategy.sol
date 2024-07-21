@@ -3,6 +3,11 @@ pragma solidity 0.8.12;
 
 import "src/strategies/BaseStrategy.sol";
 
+/**
+ * @title cefi strategy
+ * @author Obelisk
+ * @notice Collect assets and help users complete cefi arbitrage
+ */
 contract CefiStrategy is BaseStrategy {
     mapping(address => uint256) public pendingWithdrawal;
     uint256 public totalPendingWithdrawal;
@@ -37,6 +42,11 @@ contract CefiStrategy is BaseStrategy {
         );
     }
 
+    /**
+     * Withdrawal request, can only be applied when the withdrawal status is Close
+     * @param _user user addr
+     * @param _amount withdrawal amount
+     */
     function requestWithdrawal(address _user, uint256 _amount) external override onlyStrategyManager {
         if (withdrawStatus != StrategyStatus.Close) {
             revert Errors.CantRequestWithdrawal();
@@ -47,20 +57,30 @@ contract CefiStrategy is BaseStrategy {
         emit RequestWithdrawal(address(this), _user, _amount);
     }
 
+    /**
+     * Users must apply in advance and initiate a withdrawal when the withdrawal status is open
+     * @param _user user addr
+     * @param _amount withdrawa amount
+     */
     function withdraw(address _user, uint256 _amount) external override onlyStrategyManager {
         if (withdrawStatus != StrategyStatus.Open) {
             revert Errors.WithdrawalNotOpen();
         }
 
-        if (pendingWithdrawal[_user] == 0) {
+        if (pendingWithdrawal[_user] != _amount) {
             revert Errors.NoWithdrawalRequested();
         }
 
         _withdraw(_user, _amount);
-        pendingWithdrawal[_user] -= _amount;
+        pendingWithdrawal[_user] = 0;
         totalPendingWithdrawal -= _amount;
     }
 
+    /**
+     * Operate the underlying assets deposited by users to the vault address
+     * The vault address is set in advance and made public. It should at least be a multi-sig wallet
+     * @param _amount transfer amount
+     */
     function operatingUnderlyingToken(uint256 _amount) external onlyFundManager {
         address _to = fundVault;
         _transfer(_to, _amount);

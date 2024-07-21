@@ -9,6 +9,11 @@ import "src/interfaces/IStrategyManager.sol";
 import "src/interfaces/IBaseStrategy.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/**
+ * @title Yield Strategy Manager
+ * @author Obelisk
+ * @notice Entry to income strategy
+ */
 contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyManager {
     constructor() {
         _disableInitializers();
@@ -20,6 +25,12 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
         __Strategy_init(_strategies);
     }
 
+    /**
+     * Query which strategies the user has staked
+     * @param _user user addr
+     * @return strategies
+     * @return _shares
+     */
     function getStakerStrategyList(address _user) public view returns (address[] memory, uint256[] memory) {
         uint256 _strategyListength = strategyList.length;
         uint256[] memory _sharesList = new uint256[](_strategyListength);
@@ -49,26 +60,50 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
         return (strategies, _shares);
     }
 
+    /**
+     * Add deposit strategy
+     * @param _strategies deposit strategies
+     */
     function addStrategies(address[] calldata _strategies) external onlyDao {
         _addStrategies(_strategies);
     }
 
+    /**
+     * Remove strategy
+     * @param _strategies deposit strategies
+     */
     function removeStrategies(address[] calldata _strategies) external onlyDao {
         _removeStrategies(_strategies);
     }
 
+    /**
+     * Stake assets into strategies to earn
+     * @param _strategy stake strategy addr
+     * @param _amount stake amount
+     */
     function deposit(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
         _checkStrategiesWhitelisted(_strategy);
         IBaseStrategy(_strategy).deposit(msg.sender, _amount);
         emit UserDeposit(_strategy, msg.sender, _amount, block.number);
     }
 
+    /**
+     * Withdrawal Request
+     * @param _strategy strategy addr
+     * @param _amount withdraw amount
+     */
     function requestWithdrawal(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
         _checkStrategiesWhitelisted(_strategy);
         IBaseStrategy(_strategy).requestWithdrawal(msg.sender, _amount);
         emit UserWithdrawal(_strategy, msg.sender, _amount, block.number);
     }
 
+    /**
+     * Withdrawal, When the strategy does not require immediate withdrawal,
+     * A withdrawal request must be initiated first, such as: CefiStrategy
+     * @param _strategy strategy addr
+     * @param _amount withdraw amount
+     */
     function withdraw(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
         _checkStrategiesWhitelisted(_strategy);
         IBaseStrategy(_strategy).withdraw(msg.sender, _amount);

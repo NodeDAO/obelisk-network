@@ -9,18 +9,28 @@ import "src/interfaces/IERC20Decimal.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/**
+ * @title Mint OBTC Strategy
+ * @author Obelisk
+ * @notice Receive ERC20 BTC assets to mint OBTC
+ */
 contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
     using SafeERC20 for IERC20;
 
+    // ERC20 BTC asset address
     IERC20 public underlyingToken;
+    // OBTC asset address
     address public assetAddr;
 
     address public obeliskNetwork;
+    // DAO can withdraw the ERC20 assets pledged by users to the multi-sig vault,
+    // which will initiate the pledge and generate income for users.
     address public fundVault;
 
     StrategyStatus internal depositStatus;
     StrategyStatus internal withdrawStatus;
 
+    // Withdrawal delay
     uint256 internal withdrawalDelayBlocks;
 
     modifier onlyObeliskNetwork() {
@@ -52,14 +62,25 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
         assetAddr = _assetAddr;
 
         withdrawalDelayBlocks = _withdrawalDelayBlocks;
+        // Withdrawal is not enabled by default
         depositStatus = StrategyStatus.Open;
         withdrawStatus = StrategyStatus.Close;
     }
 
+    /**
+     * Get withdrawal delay for strategy
+     * @return _withdrawalDelayBlocks
+     */
     function getWithdrawalDelayBlocks() external view returns (uint256) {
         return withdrawalDelayBlocks;
     }
 
+    /**
+     * Amounts are calculated based on the precision of different tokens to ensure 1:1
+     * @param amount amount
+     * @param sourceDecimals  source token decimals
+     * @param targetDecimals  target token decimals
+     */
     function convertAmount(uint256 amount, uint8 sourceDecimals, uint8 targetDecimals) public pure returns (uint256) {
         if (sourceDecimals == targetDecimals) {
             return amount;
@@ -70,6 +91,13 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
         }
     }
 
+    /**
+     * Transfer user deposit assets
+     * Check whether the deposited token is consistent with the minted token of the strategy
+     * @param _token token address,such as: oBTC addr
+     * @param _user user addr
+     * @param _amount deposit amount
+     */
     function deposit(address _token, address _user, uint256 _amount)
         external
         onlyObeliskNetwork
@@ -80,10 +108,13 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
             revert Errors.DepositNotOpen();
         }
 
+        // The erc20 asset must implement the decimals method, which involves mapping between assets of different decimals
         uint8 sourceDecimals = IERC20Decimal(address(underlyingToken)).decimals();
         uint8 targetDecimals = IERC20Decimal(address(assetAddr)).decimals();
 
+        // Calculate the number of tokens that should be minted based on the precision
         uint256 _mintAmount = convertAmount(_amount, sourceDecimals, targetDecimals);
+        // Ensure there is no loss of accuracy and calculate the user's deposit amount
         uint256 _depositAmount = convertAmount(_mintAmount, targetDecimals, sourceDecimals);
 
         _deposit(_user, _depositAmount);
@@ -92,6 +123,13 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
         return _mintAmount;
     }
 
+    /**
+     * User Withdrawal
+     * Check whether the withdrawal token is consistent with the strategy's burn token
+     * @param _token token address,such as: oBTC addr
+     * @param _user user address
+     * @param _amount withdrawal amount
+     */
     function withdraw(address _token, address _user, uint256 _amount)
         external
         virtual
@@ -103,6 +141,7 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
         }
         uint8 targetDecimals = IERC20Decimal(address(underlyingToken)).decimals();
         uint8 sourceDecimals = IERC20Decimal(address(assetAddr)).decimals();
+        // Calculate the amount that users can withdraw based on the precision
         uint256 _transferAmount = convertAmount(_amount, sourceDecimals, targetDecimals);
 
         _withdrawal(_user, _transferAmount);
@@ -117,12 +156,22 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
         underlyingToken.safeTransfer(_user, _amountToSend);
     }
 
+    /**
+     * Operate the underlying assets deposited by users to the vault address
+     * The vault address is set in advance and made public. It should at least be a multi-sig wallet
+     * @param _amount transfer amount
+     */
     function operatingUnderlyingToken(uint256 _amount) external onlyDao {
         address _to = fundVault;
         underlyingToken.safeTransfer(_to, _amount);
         emit UnderlyingTokenTransfer(_to, _amount);
     }
 
+    /**
+     * setStrategyStatus
+     * @param _depositStatus deposit status
+     * @param _withdrawStatus  withdrawal status
+     */
     function setStrategyStatus(StrategyStatus _depositStatus, StrategyStatus _withdrawStatus) external onlyDao {
         if (_depositStatus != depositStatus) {
             emit DepositStatusChanged(depositStatus, _depositStatus);
@@ -134,10 +183,19 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
         }
     }
 
+    /**
+     * Get the deposit and withdrawal status of the strategy
+     * @return _depositStatus
+     * @return _withdrawStatus
+     */
     function getStrategyStatus() public view returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus) {
         return (depositStatus, withdrawStatus);
     }
 
+    /**
+     * set strategy vault addr
+     * @param _fundVault underlying asset management vault
+     */
     function setFundVault(address _fundVault) external onlyDao {
         emit FundVaultChanged(fundVault, _fundVault);
         fundVault = _fundVault;

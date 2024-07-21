@@ -9,12 +9,18 @@ import "src/modules/Version.sol";
 import "src/modules/Dao.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/**
+ * @title Security module for minting tokens
+ * @author Obelisk
+ * @notice mint transactions must be approved by a sufficient number of guardians
+ */
 contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
     struct Signature {
         bytes32 r;
         bytes32 vs;
     }
 
+    // The contract address and chain id form variables to prevent replay attacks
     bytes32 public MINT_MESSAGE_PREFIX;
 
     uint256 internal quorum;
@@ -142,6 +148,9 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         emit GuardianRemoved(addr);
     }
 
+    /**
+     * Batch mint token
+     */
     function bulkMint(
         address[] memory tokens,
         bytes32[] memory txHashs,
@@ -172,14 +181,17 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         }
     }
 
+    /**
+     * mint token
+     */
     function mint(
-        address token,
-        bytes32 txHash,
-        address destAddr,
-        uint256 stakingOutputIdx,
-        uint256 inclusionHeight,
-        uint256 stakingAmount,
-        Signature[] calldata sortedGuardianSignatures
+        address token, // oBTC token addr
+        bytes32 txHash, // BTC deposit tx hash
+        address destAddr, // evm addr that receive the token
+        uint256 stakingOutputIdx, // BTC tx output index
+        uint256 inclusionHeight, // The block height containing the BTC deposit tx
+        uint256 stakingAmount, // deposit amount
+        Signature[] calldata sortedGuardianSignatures // guardian signatures
     ) public whenNotPaused {
         if (quorum == 0 || sortedGuardianSignatures.length < quorum) revert Errors.DepositNoQuorum();
 
@@ -196,6 +208,9 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         emit TokenMinted(msgHash, txHash, token, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount);
     }
 
+    /**
+     * check guardian signature
+     */
     function _verifySignatures(
         address token,
         bytes32 txHash,
@@ -218,6 +233,9 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         }
     }
 
+    /**
+     * Calculate msg hash of the mint tx
+     */
     function calcMsgHash(
         address token,
         bytes32 txHash,

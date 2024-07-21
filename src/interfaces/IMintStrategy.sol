@@ -5,6 +5,7 @@ interface IMintStrategy {
     enum StrategyStatus {
         Close, // 0
         Open // 1
+
     }
 
     function getWithdrawalDelayBlocks() external view returns (uint256);

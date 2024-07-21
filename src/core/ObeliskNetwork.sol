@@ -11,7 +11,13 @@ import "src/modules/Strategy.sol";
 import "src/modules/WithdrawalRequest.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/**
+ * @title Obelisk Network
+ * @author Obelisk
+ * @notice Manage asset minting and withdrawals
+ */
 contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalRequest, Strategy, IObeliskNetwork {
+    // mintSecurity is responsible for checking the guardian's minting signature
     address public mintSecurityAddr;
 
     modifier onlyMintSecurity() {
@@ -39,10 +45,18 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         mintSecurityAddr = _mintSecurityAddr;
     }
 
+    /**
+     * The user has completed the deposit and the guardians has signed the minting tx
+     * @param _token The address of the asset to be minted
+     * @param _to The address where the token is received
+     * @param _mintAmount mint amount
+     */
     function mint(address _token, address _to, uint256 _mintAmount) external onlyMintSecurity {
+        // Check if assets are supported
         if (!_isSupportedAsset(_token)) {
             revert Errors.AssetNotSupported();
         }
+        // Check if the asset is suspended
         if (_isPausedAsset(_token)) {
             revert Errors.AssetPaused();
         }
@@ -50,6 +64,12 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         IBaseToken(_token).whiteListMint(_mintAmount, _to);
     }
 
+    /**
+     * Allow users to deposit assets for minting
+     * @param _strategy deposit strategy
+     * @param _token The address of the asset to be minted
+     * @param _amount deposit amount, when the asset precision is different, _amount may not be the final deposit amount
+     */
     function deposit(address _strategy, address _token, uint256 _amount) external whenNotPaused {
         _checkStrategiesWhitelisted(_strategy);
         address _user = msg.sender;
@@ -58,20 +78,30 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         emit Deposit(_strategy, _token, _mintAmount);
     }
 
+    /**
+     * User application for withdrawing underlying assets
+     * @param _strategy deposit strategy
+     * @param _token he address of the asset to be minted
+     * @param _withdrawalAmount withdrawal amount
+     * @param _withdrawalAddr withdrawal addr, if the _strategy is not nativeBTCStrategy, it can be empty
+     */
     function requestWithdrawals(
         address _strategy,
         address _token,
         uint256 _withdrawalAmount,
-        bytes memory _withdrawalAddr // If the _strategy is not nativeBTCStrategy, it can be empty
+        bytes memory _withdrawalAddr
     ) external whenNotPaused {
         if (_strategy != nativeBTCStrategy) {
+            // If it is a deposit strategy, check whether the strategy address is recognized
             _checkStrategiesWhitelisted(_strategy);
         } else {
+            // If it is a native BTC withdrawal, check whether it is suspended
             if (nativeBTCPaused) {
                 revert Errors.NativeBTCPaused();
             }
         }
 
+        // Check if the token is supported
         if (!_isSupportedAsset(_token)) {
             revert Errors.AssetNotSupported();
         }
@@ -84,6 +114,11 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         _requestWithdrawals(_strategy, _token, _sender, _withdrawalAmount, _withdrawalAddr);
     }
 
+    /**
+     * Batch claim to satisfy delayed withdrawal requests
+     * @param _receivers receiver addr
+     * @param _requestIds withdrawal request id
+     */
     function bulkClaimWithdrawals(address[] memory _receivers, uint256[][] memory _requestIds) external {
         uint256 bulkLen = _receivers.length;
         if (bulkLen != _requestIds.length) {
@@ -95,6 +130,11 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         }
     }
 
+    /**
+     * claim to satisfy delayed withdrawal requests
+     * @param _receiver receiver addr
+     * @param _requestIds withdrawal request id
+     */
     function claimWithdrawals(address _receiver, uint256[] memory _requestIds) public whenNotPaused {
         for (uint256 i = 0; i < _requestIds.length; ++i) {
             uint256 _requestId = _requestIds[i];
@@ -104,38 +144,76 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         }
     }
 
+    /**
+     * Adding supported assets
+     * @param _token asset addr
+     */
     function addAsset(address _token) external onlyDao {
         _addAsset(_token);
     }
 
+    /**
+     * Remove supported assets
+     *  @param _token asset addr
+     */
     function removeAsset(address _token) external onlyDao {
         _removeAsset(_token);
     }
 
+    /**
+     * Whether to suspend or re-support assets
+     * @param _token asset addr
+     * @param _status asset status
+     */
     function setAssetStatus(address _token, bool _status) external onlyDao {
         _setAssetStatus(_token, _status);
     }
 
+    /**
+     * Set up blacklist administrators to handle abnormal withdrawals
+     * Such as withdrawals initiated by attackers
+     * @param _blackListAdmin blackList admin
+     */
     function setBlackListAdmin(address _blackListAdmin) external onlyDao {
         _setBlackListAdmin(_blackListAdmin);
     }
 
+    /**
+     * Set delay block for native withdrawals
+     * @param _withdrawalDelayBlocks withdrawal delay block
+     */
     function setWithdrawalDelayBlocks(uint256 _withdrawalDelayBlocks) public onlyDao {
         _setWithdrawalDelayBlocks(_withdrawalDelayBlocks);
     }
 
+    /**
+     * Set the state of native withdrawal
+     * @param _status withdrawal status
+     */
     function setNativeBTCPausedStatus(bool _status) public onlyDao {
         _setNativeBTCPaused(_status);
     }
 
+    /**
+     * Add deposit strategy
+     * @param _strategies deposit strategies
+     */
     function addStrategies(address[] calldata _strategies) external onlyDao {
         _addStrategies(_strategies);
     }
 
+    /**
+     * Remove strategy
+     * @param _strategies deposit strategies
+     */
     function removeStrategies(address[] calldata _strategies) external onlyDao {
         _removeStrategies(_strategies);
     }
 
+    /**
+     * Owner set dao addr
+     * @param _dao dao addr
+     */
     function setDao(address _dao) public onlyOwner {
         _setDao(_dao);
     }

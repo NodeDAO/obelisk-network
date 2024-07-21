@@ -7,6 +7,12 @@ import "src/interfaces/IBaseToken.sol";
 import {Errors} from "src/libraries/Errors.sol";
 import "src/modules/BlackList.sol";
 
+/**
+ * @title Provide basic token functions
+ * @author Obelisk
+ * @notice tokenAdmin has the right to mint and burn tokens.
+ * blackListAdmin has the right to set blacklists.
+ */
 abstract contract BaseToken is ERC20, Ownable, BlackList, IBaseToken {
     address public tokenAdmin;
 
@@ -19,6 +25,9 @@ abstract contract BaseToken is ERC20, Ownable, BlackList, IBaseToken {
         tokenAdmin = _tokenAdmin;
     }
 
+    /**
+     * decimals 8, The native precision of BTC is 8
+     */
     function decimals() public pure virtual override returns (uint8) {
         return 8;
     }

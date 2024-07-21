@@ -10,6 +10,11 @@ import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/**
+ * @title Provide basic staking strategy
+ * @author Obelisk
+ * @notice When the strategy does not set strategyToken, the user deposit is recorded through the state
+ */
 abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
     using SafeERC20 for IERC20;
 
@@ -67,10 +72,20 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         sharesLimit = _sharesLimit;
     }
 
+    /**
+     * Get the deposit and withdrawal status of the strategy
+     * @return _depositStatus
+     * @return _withdrawStatus
+     */
     function getStrategyStatus() public view returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus) {
         return (depositStatus, withdrawStatus);
     }
 
+    /**
+     * setStrategyStatus
+     * @param _depositStatus deposit status
+     * @param _withdrawStatus  withdrawal status
+     */
     function setStrategyStatus(StrategyStatus _depositStatus, StrategyStatus _withdrawStatus)
         external
         onlyFundManager
@@ -85,6 +100,14 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         }
     }
 
+    /**
+     * Set strategy parameters
+     * @param _strategyManager strategy manager
+     * @param _fundManager  strategy fund manager
+     * @param _fundVault strategy fund vault
+     * @param _floorAmount Minimum stake amount
+     * @param _sharesLimit The maximum amount that the strategy allows to receive
+     */
     function setStrategySetting(
         address _strategyManager,
         address _fundManager,
@@ -133,6 +156,11 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         emit Deposit(address(this), _user, _amount);
     }
 
+    /**
+     * User Withdrawal
+     * @param _user user addr
+     * @param _amount withdrawal amount
+     */
     function requestWithdrawal(address _user, uint256 _amount) external virtual onlyStrategyManager {
         if (withdrawStatus != StrategyStatus.Open) {
             revert Errors.WithdrawalNotOpen();
@@ -141,6 +169,11 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         _withdraw(_user, _amount);
     }
 
+    /**
+     * User Withdrawal
+     * @param _user user addr
+     * @param _amount withdrawa amount
+     */
     function withdraw(address _user, uint256 _amount) external virtual onlyStrategyManager {
         if (withdrawStatus != StrategyStatus.Open) {
             revert Errors.WithdrawalNotOpen();
@@ -185,12 +218,24 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         IBaseToken(strategyToken).whiteListBurn(_amount, _user);
     }
 
+    /**
+     * Query user stake amount
+     * @param _user user addr
+     */
     function getUserShares(address _user) external view returns (uint256) {
         if (strategyToken == address(0)) {
             return userShares[_user];
         }
 
         return IERC20(strategyToken).balanceOf(_user);
+    }
+
+    /**
+     * Owner set dao addr
+     * @param _dao dao addr
+     */
+    function setDao(address _dao) public onlyOwner {
+        _setDao(_dao);
     }
 
     /**

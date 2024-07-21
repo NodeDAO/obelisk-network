@@ -7,7 +7,8 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title Blacklist management
- * @author NodeDAO
+ * @author Obelisk
+ * @notice Provides a freezing function when unexpected withdrawals occur, such as withdrawals by attackers
  */
 abstract contract BlackList is Initializable, IBlackList {
     mapping(address => bool) public isBlackListed;

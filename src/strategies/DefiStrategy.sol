@@ -3,6 +3,11 @@ pragma solidity 0.8.12;
 
 import "src/strategies/BaseStrategy.sol";
 
+/**
+ * @title Defi Strategy
+ * @author Obelisk
+ * @notice Obtain income through DeFi
+ */
 contract DefiStrategy is BaseStrategy {
     constructor() {
         _disableInitializers();

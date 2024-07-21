@@ -11,7 +11,7 @@ import "src/interfaces/IVersion.sol";
 
 /**
  * @title Version management contract
- * @author NodeDAO
+ * @author Obelisk
  * @notice Encapsulates the basic functions of
  * UUPSUpgradeable contract,
  * OwnableUpgradeable contract,

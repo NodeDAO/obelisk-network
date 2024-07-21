@@ -6,6 +6,11 @@ import "src/interfaces/IBaseToken.sol";
 import "src/interfaces/IAssets.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/**
+ * @title Asset Management
+ * @author Obelisk
+ * @notice Provide asset management function module
+ */
 abstract contract Assets is Initializable, IAssets {
     address[] internal assetList;
     mapping(address => bool) public assetPaused;
