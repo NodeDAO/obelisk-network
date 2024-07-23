@@ -4,9 +4,9 @@ pragma solidity 0.8.12;
 import "src/tokens/BaseToken.sol";
 
 /**
- * @title
+ * @title Obelisk LTC
  * @author Obelisk
- * @notice
+ * @notice oLTC is an equivalent asset mapping of LTC
  */
 contract OLTC is BaseToken {
     constructor(address _tokenAdmin) BaseToken("Obelisk LTC", "oLTC", _tokenAdmin) {}

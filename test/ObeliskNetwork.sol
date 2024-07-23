@@ -7,7 +7,7 @@ import "forge-std/Script.sol";
 import "src/tokens/OBTC.sol";
 import "src/tokens/OLTC.sol";
 import "src/tokens/OYBTCB2.sol";
-import "src/tokens/OYBTCBBL.sol";
+import "src/tokens/OYBTCBBN.sol";
 import {TestToken, TestToken2} from "test/TestToken.sol";
 import "src/core/ObeliskNetwork.sol";
 import "src/strategies/DefiStrategy.sol";
@@ -99,7 +99,7 @@ contract ObeliskNetworkTest is Test {
         console.log("=====defiStrategyB2=====", address(_defiStrategyB2));
         console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
         OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2));
-        OYBTCBBL nBTCbbl = new OYBTCBBL(address(_defiStrategyBBL));
+        OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL));
         console.log("=====nBTCb2=====", address(nBTCb2));
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 

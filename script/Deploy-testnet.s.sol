@@ -6,7 +6,8 @@ import "forge-std/Script.sol";
 import "src/tokens/OBTC.sol";
 import {TestToken, TestToken2} from "test/TestToken.sol";
 import "src/tokens/OYBTCB2.sol";
-import "src/tokens/OYBTCBBL.sol";
+import "src/tokens/OYBTCBBN.sol";
+import "src/tokens/OYBTCFBTC.sol";
 import "src/core/ObeliskNetwork.sol";
 import "src/strategies/DefiStrategy.sol";
 import "src/core/MintSecurity.sol";
@@ -49,11 +50,13 @@ contract HoleskyDeployObelisk is Script {
 
         // _mintSecurity.initialize(_dao, _dao, address(_obeliskNetwork));
 
+        address fbtc = deployStrategysFBTC(address(_oBTC), address(_strategyManager));
         address b2 = deployStrategysB2(address(_oBTC), address(_strategyManager));
         address bbl = deployStrategysBBL(address(_oBTC), address(_strategyManager));
-        address[] memory _strategies = new address[](2);
+        address[] memory _strategies = new address[](3);
         _strategies[0] = address(b2);
         _strategies[1] = address(bbl);
+        _strategies[1] = address(fbtc);
 
         _strategyManager.initialize(_dao, _dao, _strategies);
 
@@ -100,7 +103,7 @@ contract HoleskyDeployObelisk is Script {
         address _defiStrategyImple = address(new DefiStrategy());
         DefiStrategy _defiStrategyBBL = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
         console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
-        OYBTCBBL nBTCbbl = new OYBTCBBL(address(_defiStrategyBBL));
+        OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL));
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
         _defiStrategyBBL.initialize(
@@ -108,5 +111,19 @@ contract HoleskyDeployObelisk is Script {
         );
 
         return address(_defiStrategyBBL);
+    }
+
+    function deployStrategysFBTC(address _obBTC, address _strategyManager) internal returns (address) {
+        address _defiStrategyImple = address(new DefiStrategy());
+        DefiStrategy _defiStrategyFBTC = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
+        console.log("=====defiStrategyFBTC=====", address(_defiStrategyFBTC));
+        OYBTCFBTC oyBTCfbtc = new OYBTCFBTC(address(_defiStrategyFBTC));
+        console.log("=====oyBTCfbtc=====", address(oyBTCfbtc));
+
+        _defiStrategyFBTC.initialize(
+            _dao, _dao, _strategyManager, _dao, _dao, 10000, 10000000000000, address(_obBTC), address(oyBTCfbtc)
+        );
+
+        return address(_defiStrategyFBTC);
     }
 }
