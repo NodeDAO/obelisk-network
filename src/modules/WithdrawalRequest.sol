@@ -31,7 +31,9 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
 
     mapping(address => WithdrawalInfo[]) internal withdrawalQueue;
 
-    uint256 public totalWithdrawalAmount;
+    mapping(address => uint256) public totalWithdrawalAmount;
+
+    uint256 public nonNativeWithdrawalFee;
 
     function __WithdrawalRequest_init(uint256 _withdrawalDelayBlocks, address _blackListAdmin)
         internal
@@ -97,7 +99,7 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
                 withdrawalAddr: _withdrawalAddr
             })
         );
-        totalWithdrawalAmount += _withdrawalAmount;
+        totalWithdrawalAmount[_strategy] += _withdrawalAmount;
         emit WithdrawalsRequest(
             _token, _receiver, withdrawalQueue[_receiver].length - 1, _withdrawalAmount, _withdrawalAddr, _blockNumber
         );
@@ -140,7 +142,7 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
 
         withdrawalQueue[_receiver][_requestId].claimed = 1;
 
-        totalWithdrawalAmount -= _userWithdrawal.withdrawalAmount;
+        totalWithdrawalAmount[_userWithdrawal.strategy] -= _userWithdrawal.withdrawalAmount;
         emit WithdrawalsClaimed(
             _userWithdrawal.token,
             _receiver,
@@ -156,6 +158,11 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
     function _setNativeBTCPaused(bool _status) internal {
         emit NativeBTCPausedChanged(nativeBTCPaused, _status);
         nativeBTCPaused = _status;
+    }
+
+    function _setNonNativeWithdrawalFee(uint256 _nonNativeWithdrawalFee) internal {
+        emit NonNativeWithdrawalFeeChanged(nonNativeWithdrawalFee, _nonNativeWithdrawalFee);
+        nonNativeWithdrawalFee = _nonNativeWithdrawalFee;
     }
 
     /**
@@ -176,5 +183,5 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 }

@@ -35,4 +35,5 @@ library Errors {
     error AssetDismatch();
     error ExceedDepositLimit();
     error NativeBTCPaused();
+    error ExecuteFailed();
 }

@@ -90,14 +90,22 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         address _token,
         uint256 _withdrawalAmount,
         bytes memory _withdrawalAddr
-    ) external whenNotPaused {
+    ) external payable whenNotPaused {
         if (_strategy != nativeBTCStrategy) {
             // If it is a deposit strategy, check whether the strategy address is recognized
             _checkStrategiesWhitelisted(_strategy);
+            if (nonNativeWithdrawalFee != msg.value) {
+                // Check whether the handling fee is prepaid
+                revert Errors.InvalidAmount();
+            }
         } else {
             // If it is a native BTC withdrawal, check whether it is suspended
             if (nativeBTCPaused) {
                 revert Errors.NativeBTCPaused();
+            }
+            // There is no pre-collection fee for native withdrawals, and the fee will be charged on the BTC chain
+            if (msg.value != 0) {
+                revert Errors.InvalidAmount();
             }
         }
 
@@ -187,6 +195,16 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
     }
 
     /**
+     * Set nonNativeWithdrawalFee
+     * @param _nonNativeWithdrawalFee nonNativeWithdrawal fee
+     * @notice Non-native withdrawal pre-collection fee, used to help users automatically claim
+     * There is no pre-collection fee for native withdrawals, and the fee will be charged on the BTC chain
+     */
+    function setNonNativeWithdrawalFee(uint256 _nonNativeWithdrawalFee) public onlyDao {
+        _setNonNativeWithdrawalFee(_nonNativeWithdrawalFee);
+    }
+
+    /**
      * Set the state of native withdrawal
      * @param _status withdrawal status
      */
@@ -229,7 +247,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
      * @notice Contract version
      */
     function version() public pure override returns (uint8) {
-        return 1;
+        return 4;
     }
 
     /**
