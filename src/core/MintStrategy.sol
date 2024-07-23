@@ -4,6 +4,8 @@ pragma solidity 0.8.12;
 import "src/libraries/Errors.sol";
 import "src/modules/Version.sol";
 import "src/modules/Dao.sol";
+import "src/modules/Whitelisted.sol";
+import "src/modules/Call.sol";
 import "src/interfaces/IMintStrategy.sol";
 import "src/interfaces/IERC20Decimal.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
@@ -14,7 +16,7 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
  * @author Obelisk
  * @notice Receive ERC20 BTC assets to mint OBTC
  */
-contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
+contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintStrategy {
     using SafeERC20 for IERC20;
 
     // ERC20 BTC asset address
@@ -157,14 +159,29 @@ contract MintStrategy is Initializable, Version, Dao, IMintStrategy {
     }
 
     /**
-     * Operate the underlying assets deposited by users to the vault address
-     * The vault address is set in advance and made public. It should at least be a multi-sig wallet
-     * @param _amount transfer amount
+     * The _to parameter must be pre-set to a whitelist.
+     * Used for fund transfer between DeFi protocols without the need for intermediate account.
      */
-    function operatingUnderlyingToken(uint256 _amount) external onlyDao {
-        address _to = fundVault;
-        underlyingToken.safeTransfer(_to, _amount);
-        emit UnderlyingTokenTransfer(_to, _amount);
+    function execute(uint256 _value, address _to, bytes memory _data, uint256 _txGas) external onlyDao {
+        _checkWhitelisted(_to);
+        _execute(_value, _to, _data, _txGas);
+        emit TxExecuted(_value, _to, _data);
+    }
+
+    /**
+     * Add deposit strategy
+     * @param _strategies deposit strategies
+     */
+    function addWhitelisted(address[] calldata _strategies) external onlyDao {
+        _addWhitelisted(_strategies);
+    }
+
+    /**
+     * Remove strategy
+     * @param _strategies deposit strategies
+     */
+    function removeWhitelisted(address[] calldata _strategies) external onlyDao {
+        _removeWhitelisted(_strategies);
     }
 
     /**

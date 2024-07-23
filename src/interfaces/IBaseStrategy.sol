@@ -24,4 +24,5 @@ interface IBaseStrategy {
     event RequestWithdrawal(address _strategy, address _user, uint256 _amount);
     event Deposit(address _strategy, address _user, uint256 _amount);
     event UnderlyingTokenTransfer(address _to, uint256 _amount);
+    event TxExecuted(uint256 _value, address _to, bytes _data);
 }

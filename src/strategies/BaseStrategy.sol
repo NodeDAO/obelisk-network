@@ -4,6 +4,8 @@ pragma solidity 0.8.12;
 import "src/libraries/Errors.sol";
 import "src/modules/Version.sol";
 import "src/modules/Dao.sol";
+import "src/modules/Whitelisted.sol";
+import "src/modules/Call.sol";
 import "src/interfaces/IBaseToken.sol";
 import "src/interfaces/IBaseStrategy.sol";
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
@@ -15,7 +17,7 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
  * @author Obelisk
  * @notice When the strategy does not set strategyToken, the user deposit is recorded through the state
  */
-abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
+abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call, IBaseStrategy {
     using SafeERC20 for IERC20;
 
     address public strategyManager;
@@ -228,6 +230,32 @@ abstract contract BaseStrategy is Initializable, Version, Dao, IBaseStrategy {
         }
 
         return IERC20(strategyToken).balanceOf(_user);
+    }
+
+    /**
+     * The _to parameter must be pre-set to a whitelist.
+     * Used for fund transfer between DeFi protocols without the need for intermediate account.
+     */
+    function execute(uint256 _value, address _to, bytes memory _data, uint256 _txGas) external onlyDao {
+        _checkWhitelisted(_to);
+        _execute(_value, _to, _data, _txGas);
+        emit TxExecuted(_value, _to, _data);
+    }
+
+    /**
+     * Add deposit strategy
+     * @param _strategies deposit strategies
+     */
+    function addWhitelisted(address[] calldata _strategies) external onlyDao {
+        _addWhitelisted(_strategies);
+    }
+
+    /**
+     * Remove strategy
+     * @param _strategies deposit strategies
+     */
+    function removeWhitelisted(address[] calldata _strategies) external onlyDao {
+        _removeWhitelisted(_strategies);
     }
 
     /**

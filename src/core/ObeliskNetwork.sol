@@ -7,7 +7,7 @@ import "src/interfaces/IMintStrategy.sol";
 import "src/modules/Dao.sol";
 import "src/modules/Assets.sol";
 import "src/modules/Version.sol";
-import "src/modules/Strategy.sol";
+import "src/modules/Whitelisted.sol";
 import "src/modules/WithdrawalRequest.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
@@ -16,7 +16,7 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
  * @author Obelisk
  * @notice Manage asset minting and withdrawals
  */
-contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalRequest, Strategy, IObeliskNetwork {
+contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalRequest, Whitelisted, IObeliskNetwork {
     // mintSecurity is responsible for checking the guardian's minting signature
     address public mintSecurityAddr;
 
@@ -41,7 +41,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         __Dao_init(_dao);
         __Assets_init(_tokenAddrs);
         __WithdrawalRequest_init(50400, _blackListAdmin);
-        __Strategy_init(_mintStrategies);
+        __Whitelisted_init(_mintStrategies);
         mintSecurityAddr = _mintSecurityAddr;
     }
 
@@ -71,7 +71,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
      * @param _amount deposit amount, when the asset precision is different, _amount may not be the final deposit amount
      */
     function deposit(address _strategy, address _token, uint256 _amount) external whenNotPaused {
-        _checkStrategiesWhitelisted(_strategy);
+        _checkWhitelisted(_strategy);
         address _user = msg.sender;
         uint256 _mintAmount = IMintStrategy(_strategy).deposit(_token, _user, _amount);
         IBaseToken(_token).whiteListMint(_mintAmount, _user);
@@ -93,7 +93,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
     ) external payable whenNotPaused {
         if (_strategy != nativeBTCStrategy) {
             // If it is a deposit strategy, check whether the strategy address is recognized
-            _checkStrategiesWhitelisted(_strategy);
+            _checkWhitelisted(_strategy);
             if (nonNativeWithdrawalFee != msg.value) {
                 // Check whether the handling fee is prepaid
                 revert Errors.InvalidAmount();
@@ -216,16 +216,16 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
      * Add deposit strategy
      * @param _strategies deposit strategies
      */
-    function addStrategies(address[] calldata _strategies) external onlyDao {
-        _addStrategies(_strategies);
+    function addWhitelisted(address[] calldata _strategies) external onlyDao {
+        _addWhitelisted(_strategies);
     }
 
     /**
      * Remove strategy
      * @param _strategies deposit strategies
      */
-    function removeStrategies(address[] calldata _strategies) external onlyDao {
-        _removeStrategies(_strategies);
+    function removeWhitelisted(address[] calldata _strategies) external onlyDao {
+        _removeWhitelisted(_strategies);
     }
 
     /**

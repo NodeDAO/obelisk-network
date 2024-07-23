@@ -466,7 +466,7 @@ contract ObeliskNetworkTest is Test {
     }
 
     function testGetStrategyList() public view {
-        address[] memory strategyList = _strategyManager.getStrategyList();
+        address[] memory strategyList = _strategyManager.getWhitelistedList();
         assertEq(strategyList.length, 2);
         assertEq(address(_defiStrategyB2), strategyList[0]);
         assertEq(address(_defiStrategyBBL), strategyList[1]);
@@ -474,21 +474,21 @@ contract ObeliskNetworkTest is Test {
 
     function testAddStrategies() public {
         address[] memory _strategies = deployStrategys();
-        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[0]), false);
-        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[1]), false);
+        assertEq(_strategyManager.isWhitelisted(_strategies[0]), false);
+        assertEq(_strategyManager.isWhitelisted(_strategies[1]), false);
 
         vm.prank(_dao);
-        _strategyManager.addStrategies(_strategies);
-        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[0]), true);
-        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[1]), true);
-        address[] memory strategyList = _strategyManager.getStrategyList();
+        _strategyManager.addWhitelisted(_strategies);
+        assertEq(_strategyManager.isWhitelisted(_strategies[0]), true);
+        assertEq(_strategyManager.isWhitelisted(_strategies[1]), true);
+        address[] memory strategyList = _strategyManager.getWhitelistedList();
         assertEq(strategyList.length, 4);
 
         vm.prank(_dao);
-        _strategyManager.removeStrategies(_strategies);
-        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[0]), false);
-        assertEq(_strategyManager.strategyIsWhitelisted(_strategies[1]), false);
-        strategyList = _strategyManager.getStrategyList();
+        _strategyManager.removeWhitelisted(_strategies);
+        assertEq(_strategyManager.isWhitelisted(_strategies[0]), false);
+        assertEq(_strategyManager.isWhitelisted(_strategies[1]), false);
+        strategyList = _strategyManager.getWhitelistedList();
         assertEq(strategyList.length, 2);
     }
 

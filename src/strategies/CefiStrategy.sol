@@ -77,17 +77,6 @@ contract CefiStrategy is BaseStrategy {
     }
 
     /**
-     * Operate the underlying assets deposited by users to the vault address
-     * The vault address is set in advance and made public. It should at least be a multi-sig wallet
-     * @param _amount transfer amount
-     */
-    function operatingUnderlyingToken(uint256 _amount) external onlyFundManager {
-        address _to = fundVault;
-        _transfer(_to, _amount);
-        emit UnderlyingTokenTransfer(_to, _amount);
-    }
-
-    /**
      * @notice Contract type id
      */
     function typeId() public pure override returns (bytes32) {

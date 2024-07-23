@@ -4,7 +4,7 @@ pragma solidity 0.8.12;
 import "src/libraries/Errors.sol";
 import "src/modules/Version.sol";
 import "src/modules/Dao.sol";
-import "src/modules/Strategy.sol";
+import "src/modules/Whitelisted.sol";
 import "src/interfaces/IStrategyManager.sol";
 import "src/interfaces/IBaseStrategy.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -14,7 +14,7 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
  * @author Obelisk
  * @notice Entry to income strategy
  */
-contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyManager {
+contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyManager {
     constructor() {
         _disableInitializers();
     }
@@ -22,7 +22,7 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
     function initialize(address _ownerAddr, address _dao, address[] calldata _strategies) public initializer {
         __Version_init(_ownerAddr);
         __Dao_init(_dao);
-        __Strategy_init(_strategies);
+        __Whitelisted_init(_strategies);
     }
 
     /**
@@ -32,11 +32,11 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
      * @return _shares
      */
     function getStakerStrategyList(address _user) public view returns (address[] memory, uint256[] memory) {
-        uint256 _strategyListength = strategyList.length;
+        uint256 _strategyListength = whitelistedList.length;
         uint256[] memory _sharesList = new uint256[](_strategyListength);
         uint256 _number = 0;
         for (uint256 i = 0; i < _strategyListength;) {
-            uint256 _share = IBaseStrategy(strategyList[i]).getUserShares(_user);
+            uint256 _share = IBaseStrategy(whitelistedList[i]).getUserShares(_user);
             if (_share != 0) {
                 _number++;
             }
@@ -51,7 +51,7 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
         uint256 j = 0;
         for (uint256 i = 0; i < _strategyListength;) {
             if (_sharesList[i] != 0) {
-                strategies[j] = strategyList[i];
+                strategies[j] = whitelistedList[i];
                 _shares[j] = _sharesList[i];
                 j++;
             }
@@ -64,16 +64,16 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
      * Add deposit strategy
      * @param _strategies deposit strategies
      */
-    function addStrategies(address[] calldata _strategies) external onlyDao {
-        _addStrategies(_strategies);
+    function addWhitelisted(address[] calldata _strategies) external onlyDao {
+        _addWhitelisted(_strategies);
     }
 
     /**
      * Remove strategy
      * @param _strategies deposit strategies
      */
-    function removeStrategies(address[] calldata _strategies) external onlyDao {
-        _removeStrategies(_strategies);
+    function removeWhitelisted(address[] calldata _strategies) external onlyDao {
+        _removeWhitelisted(_strategies);
     }
 
     /**
@@ -82,7 +82,7 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
      * @param _amount stake amount
      */
     function deposit(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
-        _checkStrategiesWhitelisted(_strategy);
+        _checkWhitelisted(_strategy);
         IBaseStrategy(_strategy).deposit(msg.sender, _amount);
         emit UserDeposit(_strategy, msg.sender, _amount, block.number);
     }
@@ -93,7 +93,7 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
      * @param _amount withdraw amount
      */
     function requestWithdrawal(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
-        _checkStrategiesWhitelisted(_strategy);
+        _checkWhitelisted(_strategy);
         IBaseStrategy(_strategy).requestWithdrawal(msg.sender, _amount);
         emit UserWithdrawal(_strategy, msg.sender, _amount, block.number);
     }
@@ -105,7 +105,7 @@ contract StrategyManager is Initializable, Version, Dao, Strategy, IStrategyMana
      * @param _amount withdraw amount
      */
     function withdraw(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
-        _checkStrategiesWhitelisted(_strategy);
+        _checkWhitelisted(_strategy);
         IBaseStrategy(_strategy).withdraw(msg.sender, _amount);
         emit UserRequestWithdrawal(_strategy, msg.sender, _amount, block.number);
     }
