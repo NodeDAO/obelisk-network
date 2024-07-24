@@ -4,7 +4,7 @@ pragma solidity 0.8.12;
 import "forge-std/console.sol";
 import "forge-std/Script.sol";
 import "src/tokens/OBTC.sol";
-import {TestToken, TestToken2} from "test/TestToken.sol";
+import {TestToken, TestToken2} from "test/TestContract.sol";
 import "src/tokens/OYBTCB2.sol";
 import "src/tokens/OYBTCBBN.sol";
 import "src/tokens/OYBTCFBTC.sol";

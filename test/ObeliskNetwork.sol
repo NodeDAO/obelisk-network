@@ -8,7 +8,7 @@ import "src/tokens/OBTC.sol";
 import "src/tokens/OLTC.sol";
 import "src/tokens/OYBTCB2.sol";
 import "src/tokens/OYBTCBBN.sol";
-import {TestToken, TestToken2} from "test/TestToken.sol";
+import {TestToken, TestToken2, TestStrategy} from "test/TestContract.sol";
 import "src/core/ObeliskNetwork.sol";
 import "src/strategies/DefiStrategy.sol";
 import "src/core/MintSecurity.sol";
@@ -555,5 +555,95 @@ contract ObeliskNetworkTest is Test {
 
         assertEq(_testBTC2.balanceOf(address(_mintStrategy2)), 1000000000000000000);
         assertEq(_oBTC.balanceOf(address(1)), 100000000);
+    }
+
+    function testTBTCWithdrawal() public {
+        testTBTCDeposit();
+        vm.prank(address(1));
+        _oBTC.approve(address(_obeliskNetwork), 100000000);
+        vm.prank(address(1));
+        _obeliskNetwork.requestWithdrawals(address(_mintStrategy), address(_oBTC), 100000000, "0x");
+
+        assertEq(_testBTC.balanceOf(address(_mintStrategy)), 100000000);
+        assertEq(_oBTC.balanceOf(address(1)), 0);
+    }
+
+    function testTBTCWithdrawal2() public {
+        testTBTCDeposit2();
+        vm.prank(address(1));
+        _oBTC.approve(address(_obeliskNetwork), 100000000);
+        vm.prank(address(1));
+        _obeliskNetwork.requestWithdrawals(address(_mintStrategy2), address(_oBTC), 100000000, "0x");
+        assertEq(_testBTC2.balanceOf(address(_mintStrategy2)), 1000000000000000000);
+        assertEq(_oBTC.balanceOf(address(1)), 0);
+    }
+
+    function testTBTCClaim() public {
+        vm.prank(_dao);
+        _mintStrategy.setStrategyStatus(IMintStrategy.StrategyStatus.Open, IMintStrategy.StrategyStatus.Open);
+        testTBTCWithdrawal();
+        vm.roll(50500);
+        uint256[] memory _requestIds = new uint256[](1);
+        _requestIds[0] = 0;
+        _obeliskNetwork.claimWithdrawals(address(1), _requestIds);
+        assertEq(_testBTC.balanceOf(address(_mintStrategy)), 0);
+        assertEq(_oBTC.balanceOf(address(1)), 0);
+    }
+
+    function testTBTCClaim2() public {
+        vm.prank(_dao);
+        _mintStrategy2.setStrategyStatus(IMintStrategy.StrategyStatus.Open, IMintStrategy.StrategyStatus.Open);
+        testTBTCWithdrawal2();
+        vm.roll(50500);
+        uint256[] memory _requestIds = new uint256[](1);
+        _requestIds[0] = 0;
+        _obeliskNetwork.claimWithdrawals(address(1), _requestIds);
+        assertEq(_testBTC2.balanceOf(address(_mintStrategy2)), 0);
+        assertEq(_oBTC.balanceOf(address(1)), 0);
+    }
+
+    function testTBTCClaim3() public {
+        vm.prank(_dao);
+        _mintStrategy.setStrategyStatus(IMintStrategy.StrategyStatus.Open, IMintStrategy.StrategyStatus.Open);
+        vm.prank(_dao);
+        _mintStrategy2.setStrategyStatus(IMintStrategy.StrategyStatus.Open, IMintStrategy.StrategyStatus.Open);
+
+        testTBTCWithdrawal();
+        testTBTCWithdrawal2();
+
+        vm.roll(50500);
+        uint256[] memory _requestIds = new uint256[](2);
+        _requestIds[0] = 0;
+        _requestIds[1] = 1;
+        _obeliskNetwork.claimWithdrawals(address(1), _requestIds);
+
+        assertEq(_testBTC.balanceOf(address(_mintStrategy)), 0);
+        assertEq(_oBTC.balanceOf(address(1)), 0);
+        assertEq(_testBTC2.balanceOf(address(_mintStrategy2)), 0);
+        assertEq(_oBTC.balanceOf(address(1)), 0);
+    }
+
+    function testExecute() public {
+        TestStrategy _strategy = new TestStrategy(address(_testBTC));
+        address[] memory _strategies = new address[](2);
+        _strategies[0] = address(_strategy);
+        _strategies[1] = address(_testBTC);
+        vm.prank(_dao);
+        _mintStrategy.addStrategyWhitelisted(_strategies);
+
+        testTBTCDeposit();
+
+        vm.prank(_dao);
+        _mintStrategy.execute(
+            0, address(_testBTC), abi.encodeWithSelector(ERC20.approve.selector, address(_strategy), 100000000), 200000
+        );
+
+        vm.prank(_dao);
+        _mintStrategy.execute(
+            0, address(_strategy), abi.encodeWithSelector(TestStrategy.deposit.selector, 100000000), 200000
+        );
+
+        assertEq(_testBTC.balanceOf(address(_mintStrategy)), 0);
+        assertEq(_testBTC.balanceOf(address(_strategy)), 100000000);
     }
 }
