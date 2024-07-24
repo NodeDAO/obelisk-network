@@ -56,7 +56,7 @@ contract HoleskyDeployObelisk is Script {
         address[] memory _strategies = new address[](3);
         _strategies[0] = address(b2);
         _strategies[1] = address(bbl);
-        _strategies[1] = address(fbtc);
+        _strategies[2] = address(fbtc);
 
         _strategyManager.initialize(_dao, _dao, _strategies);
 
