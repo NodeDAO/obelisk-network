@@ -15,7 +15,6 @@ interface IMintStrategy {
     event DepositStatusChanged(StrategyStatus _oldStatus, StrategyStatus _status);
     event WithdrawalStatusChanged(StrategyStatus _oldStatus, StrategyStatus _status);
     event ObeliskNetworkChanged(address obeliskNetwork, address _obeliskNetwork);
-    event FundVaultChanged(address fundVault, address _fundVault);
     event Withdrawal(address _strategy, address _underlyingToken, address _user, uint256 _amount);
     event Deposit(address _strategy, address _underlyingToken, address _user, uint256 _amount);
     event TxExecuted(uint256 _value, address _to, bytes _data);

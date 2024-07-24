@@ -25,9 +25,6 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
     address public assetAddr;
 
     address public obeliskNetwork;
-    // DAO can withdraw the ERC20 assets pledged by users to the multi-sig vault,
-    // which will initiate the pledge and generate income for users.
-    address public fundVault;
 
     StrategyStatus internal depositStatus;
     StrategyStatus internal withdrawStatus;
@@ -49,7 +46,6 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
         address _ownerAddr,
         address _dao,
         address _obeliskNetwork,
-        address _fundVault,
         address _underlyingToken,
         address _assetAddr,
         uint256 _withdrawalDelayBlocks
@@ -58,7 +54,6 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
         __Dao_init(_dao);
 
         obeliskNetwork = _obeliskNetwork;
-        fundVault = _fundVault;
 
         underlyingToken = IERC20(_underlyingToken);
         assetAddr = _assetAddr;
@@ -207,15 +202,6 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
      */
     function getStrategyStatus() public view returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus) {
         return (depositStatus, withdrawStatus);
-    }
-
-    /**
-     * set strategy vault addr
-     * @param _fundVault underlying asset management vault
-     */
-    function setFundVault(address _fundVault) external onlyDao {
-        emit FundVaultChanged(fundVault, _fundVault);
-        fundVault = _fundVault;
     }
 
     /**

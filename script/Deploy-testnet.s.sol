@@ -72,9 +72,9 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====mintStrategy2=====", address(_mintStrategy2));
 
         address _testBTC = address(new TestToken("test BTC", "tBTC", _dao));
-        _mintStrategy.initialize(_dao, _dao, address(_obeliskNetwork), _dao, address(_testBTC), address(_oBTC), 10);
+        _mintStrategy.initialize(_dao, _dao, address(_obeliskNetwork), address(_testBTC), address(_oBTC), 10);
         address _testBTC2 = address(new TestToken2("test BTC18", "tBTC18", _dao));
-        _mintStrategy2.initialize(_dao, _dao, address(_obeliskNetwork), _dao, address(_testBTC2), address(_oBTC), 10);
+        _mintStrategy2.initialize(_dao, _dao, address(_obeliskNetwork), address(_testBTC2), address(_oBTC), 10);
 
         console.log("=====testBTC=====", address(_testBTC));
         console.log("=====testBTC2=====", address(_testBTC2));
@@ -93,7 +93,7 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====nBTCb2=====", address(nBTCb2));
 
         _defiStrategyB2.initialize(
-            _dao, _dao, _strategyManager, _dao, _dao, 10000, 10000000000000, address(_obBTC), address(nBTCb2)
+            _dao, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_obBTC), address(nBTCb2)
         );
 
         return address(_defiStrategyB2);
@@ -107,7 +107,7 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
         _defiStrategyBBL.initialize(
-            _dao, _dao, _strategyManager, _dao, _dao, 10000, 10000000000000, address(_obBTC), address(nBTCbbl)
+            _dao, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_obBTC), address(nBTCbbl)
         );
 
         return address(_defiStrategyBBL);
@@ -121,7 +121,7 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====oyBTCfbtc=====", address(oyBTCfbtc));
 
         _defiStrategyFBTC.initialize(
-            _dao, _dao, _strategyManager, _dao, _dao, 10000, 10000000000000, address(_obBTC), address(oyBTCfbtc)
+            _dao, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_obBTC), address(oyBTCfbtc)
         );
 
         return address(_defiStrategyFBTC);

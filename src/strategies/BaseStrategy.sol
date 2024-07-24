@@ -22,7 +22,6 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
 
     address public strategyManager;
 
-    address public fundVault;
     address public fundManager;
     uint256 public floorAmount;
 
@@ -51,7 +50,6 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
         address _dao,
         address _strategyManager,
         address _fundManager,
-        address _fundVault,
         uint256 _floorAmount,
         address _underlyingToken,
         address _strategyToken,
@@ -63,7 +61,6 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
         __Dao_init(_dao);
         strategyManager = _strategyManager;
         fundManager = _fundManager;
-        fundVault = _fundVault;
         floorAmount = _floorAmount;
         underlyingToken = IERC20(_underlyingToken);
         if (_strategyToken != address(0)) {
@@ -106,14 +103,12 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
      * Set strategy parameters
      * @param _strategyManager strategy manager
      * @param _fundManager  strategy fund manager
-     * @param _fundVault strategy fund vault
      * @param _floorAmount Minimum stake amount
      * @param _sharesLimit The maximum amount that the strategy allows to receive
      */
     function setStrategySetting(
         address _strategyManager,
         address _fundManager,
-        address _fundVault,
         uint256 _floorAmount,
         uint256 _sharesLimit
     ) external onlyDao {
@@ -124,10 +119,6 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
         if (_fundManager != address(0)) {
             emit FundManagerChanged(fundManager, _fundManager);
             fundManager = _fundManager;
-        }
-        if (_fundVault != address(0)) {
-            emit FundVaultChanged(fundVault, _fundVault);
-            fundVault = _fundVault;
         }
         if (_floorAmount != 0) {
             emit FloorAmountChanged(floorAmount, _floorAmount);
