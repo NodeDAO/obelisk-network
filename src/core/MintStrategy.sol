@@ -167,7 +167,7 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
      * Add deposit strategy
      * @param _strategies deposit strategies
      */
-    function addWhitelisted(address[] calldata _strategies) external onlyDao {
+    function addStrategyWhitelisted(address[] calldata _strategies) external onlyDao {
         _addWhitelisted(_strategies);
     }
 
@@ -175,7 +175,7 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
      * Remove strategy
      * @param _strategies deposit strategies
      */
-    function removeWhitelisted(address[] calldata _strategies) external onlyDao {
+    function removeStrategyWhitelisted(address[] calldata _strategies) external onlyDao {
         _removeWhitelisted(_strategies);
     }
 

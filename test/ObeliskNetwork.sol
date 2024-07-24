@@ -472,14 +472,14 @@ contract ObeliskNetworkTest is Test {
         assertEq(_strategyManager.isWhitelisted(_strategies[1]), false);
 
         vm.prank(_dao);
-        _strategyManager.addWhitelisted(_strategies);
+        _strategyManager.addStrategyWhitelisted(_strategies);
         assertEq(_strategyManager.isWhitelisted(_strategies[0]), true);
         assertEq(_strategyManager.isWhitelisted(_strategies[1]), true);
         address[] memory strategyList = _strategyManager.getWhitelistedList();
         assertEq(strategyList.length, 4);
 
         vm.prank(_dao);
-        _strategyManager.removeWhitelisted(_strategies);
+        _strategyManager.removeStrategyWhitelisted(_strategies);
         assertEq(_strategyManager.isWhitelisted(_strategies[0]), false);
         assertEq(_strategyManager.isWhitelisted(_strategies[1]), false);
         strategyList = _strategyManager.getWhitelistedList();

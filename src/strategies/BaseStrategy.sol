@@ -237,7 +237,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
      * Add deposit strategy
      * @param _strategies deposit strategies
      */
-    function addWhitelisted(address[] calldata _strategies) external onlyDao {
+    function addStrategyWhitelisted(address[] calldata _strategies) external onlyDao {
         _addWhitelisted(_strategies);
     }
 
@@ -245,7 +245,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
      * Remove strategy
      * @param _strategies deposit strategies
      */
-    function removeWhitelisted(address[] calldata _strategies) external onlyDao {
+    function removeStrategyWhitelisted(address[] calldata _strategies) external onlyDao {
         _removeWhitelisted(_strategies);
     }
 
