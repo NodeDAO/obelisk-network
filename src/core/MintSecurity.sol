@@ -182,16 +182,22 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
     }
 
     /**
-     * mint token
+     * Once the deposit transaction is signed by the guardians, anyone can mint the corresponding assets.
+     * @param token oBTC token addr
+     * @param txHash BTC deposit tx hash
+     * @param destAddr evm addr that receive the token
+     * @param stakingOutputIdx BTC tx output index
+     * @param inclusionHeight The block height containing the BTC deposit tx
+     * @param stakingAmount deposit amount
      */
     function mint(
-        address token, // oBTC token addr
-        bytes32 txHash, // BTC deposit tx hash
-        address destAddr, // evm addr that receive the token
-        uint256 stakingOutputIdx, // BTC tx output index
-        uint256 inclusionHeight, // The block height containing the BTC deposit tx
-        uint256 stakingAmount, // deposit amount
-        Signature[] calldata sortedGuardianSignatures // guardian signatures
+        address token,
+        bytes32 txHash,
+        address destAddr,
+        uint256 stakingOutputIdx,
+        uint256 inclusionHeight,
+        uint256 stakingAmount,
+        Signature[] calldata sortedGuardianSignatures
     ) public whenNotPaused {
         if (quorum == 0 || sortedGuardianSignatures.length < quorum) revert Errors.DepositNoQuorum();
 
@@ -203,6 +209,34 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         }
         mintedMsgHash[msgHash] = destAddr;
 
+        IObeliskNetwork(obeliskNetwork).mint(token, destAddr, stakingAmount);
+
+        emit TokenMinted(msgHash, txHash, token, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount);
+    }
+
+    /**
+     * If the user's deposit transaction is not a standard deposit,
+     * such as a direct transfer, the user's fund recovery application should be accepted.
+     * @param token oBTC token addr
+     * @param txHash BTC deposit tx hash
+     * @param destAddr evm addr that receive the token
+     * @param stakingOutputIdx BTC tx output index
+     * @param inclusionHeight The block height containing the BTC deposit tx
+     * @param stakingAmount deposit amount
+     */
+    function permitMint(
+        address token,
+        bytes32 txHash,
+        address destAddr,
+        uint256 stakingOutputIdx,
+        uint256 inclusionHeight,
+        uint256 stakingAmount
+    ) public onlyDao whenNotPaused {
+        bytes32 msgHash = calcMsgHash(token, txHash, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount);
+        if (mintedMsgHash[msgHash] != address(0)) {
+            revert Errors.MsgHashAlreadyMint();
+        }
+        mintedMsgHash[msgHash] = destAddr;
         IObeliskNetwork(obeliskNetwork).mint(token, destAddr, stakingAmount);
 
         emit TokenMinted(msgHash, txHash, token, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount);

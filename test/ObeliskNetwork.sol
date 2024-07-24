@@ -58,15 +58,11 @@ contract ObeliskNetworkTest is Test {
         _mintStrategy = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
 
         _testBTC = new TestToken("test BTC", "tBTC", _dao);
-        _mintStrategy.initialize(
-            _ownerAddr, _dao, address(_obeliskNetwork), address(_testBTC), address(_oBTC), 50400
-        );
+        _mintStrategy.initialize(_ownerAddr, _dao, address(_obeliskNetwork), address(_testBTC), address(_oBTC), 50400);
 
         _mintStrategy2 = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
         _testBTC2 = new TestToken2("test BTC 2", "tBTC2", _dao);
-        _mintStrategy2.initialize(
-            _ownerAddr, _dao, address(_obeliskNetwork), address(_testBTC2), address(_oBTC), 50400
-        );
+        _mintStrategy2.initialize(_ownerAddr, _dao, address(_obeliskNetwork), address(_testBTC2), address(_oBTC), 50400);
 
         address[] memory _tokenAddrs = new address[](1);
         _tokenAddrs[0] = address(_oBTC);
