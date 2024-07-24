@@ -29,7 +29,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
     StrategyStatus internal depositStatus;
     StrategyStatus internal withdrawStatus;
 
-    IERC20 public underlyingToken;
+    address internal underlyingToken;
 
     address public strategyToken;
     mapping(address => uint256) internal userShares;
@@ -62,13 +62,17 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
         strategyManager = _strategyManager;
         fundManager = _fundManager;
         floorAmount = _floorAmount;
-        underlyingToken = IERC20(_underlyingToken);
+        underlyingToken = _underlyingToken;
         if (_strategyToken != address(0)) {
             strategyToken = _strategyToken;
         }
         depositStatus = _depositStatus;
         withdrawStatus = _withdrawStatus;
         sharesLimit = _sharesLimit;
+    }
+
+    function getUnderlyingToken() external view returns (address) {
+        return underlyingToken;
     }
 
     /**
@@ -143,7 +147,6 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
             revert Errors.DepositNotOpen();
         }
 
-        _beforeDeposit(_user, _amount);
         _addShares(_user, _amount);
 
         emit Deposit(address(this), _user, _amount);
@@ -181,12 +184,8 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
         emit Withdrawal(address(this), _user, _amount);
     }
 
-    function _beforeDeposit(address _user, uint256 _amount) internal {
-        underlyingToken.safeTransferFrom(_user, address(this), _amount);
-    }
-
     function _transfer(address _user, uint256 _amountToSend) internal {
-        underlyingToken.safeTransfer(_user, _amountToSend);
+        IERC20(underlyingToken).safeTransfer(_user, _amountToSend);
     }
 
     function _addShares(address _user, uint256 _amount) internal {

@@ -12,6 +12,7 @@ interface IBaseStrategy {
     function requestWithdrawal(address _user, uint256 _amount) external;
     function withdraw(address _user, uint256 _amount) external;
     function getUserShares(address _user) external view returns (uint256);
+    function getUnderlyingToken() external view returns (address);
 
     event DepositStatusChanged(StrategyStatus _oldStatus, StrategyStatus _status);
     event WithdrawalStatusChanged(StrategyStatus _oldStatus, StrategyStatus _status);

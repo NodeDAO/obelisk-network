@@ -489,11 +489,14 @@ contract ObeliskNetworkTest is Test {
     function testDeposit() public {
         testMint();
         vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
-        _oBTC.approve(address(_defiStrategyB2), 100000);
-        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
-        _oBTC.approve(address(_defiStrategyBBL), 100000);
+        _oBTC.approve(address(_strategyManager), 100000);
+
         vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
         _strategyManager.deposit(address(_defiStrategyB2), 100000);
+
+        vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        _oBTC.approve(address(_strategyManager), 100000);
+
         vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
         _strategyManager.deposit(address(_defiStrategyBBL), 100000);
         assertEq(_oBTC.balanceOf(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8), 120000000 - 100000 * 2);
@@ -637,6 +640,8 @@ contract ObeliskNetworkTest is Test {
         _mintStrategy.execute(
             0, address(_testBTC), abi.encodeWithSelector(ERC20.approve.selector, address(_strategy), 100000000), 200000
         );
+
+        assertEq(_testBTC.balanceOf(address(_mintStrategy)), 100000000);
 
         vm.prank(_dao);
         _mintStrategy.execute(

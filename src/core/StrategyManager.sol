@@ -7,6 +7,7 @@ import "src/modules/Dao.sol";
 import "src/modules/Whitelisted.sol";
 import "src/interfaces/IStrategyManager.sol";
 import "src/interfaces/IBaseStrategy.sol";
+import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -15,6 +16,8 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
  * @notice Entry to income strategy
  */
 contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyManager {
+    using SafeERC20 for IERC20;
+
     constructor() {
         _disableInitializers();
     }
@@ -83,6 +86,8 @@ contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyM
      */
     function deposit(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
         _checkWhitelisted(_strategy);
+        address underlyingToken = IBaseStrategy(_strategy).getUnderlyingToken();
+        _beforeDeposit(underlyingToken, msg.sender, _strategy, _amount);
         IBaseStrategy(_strategy).deposit(msg.sender, _amount);
         emit UserDeposit(_strategy, msg.sender, _amount, block.number);
     }
@@ -108,6 +113,10 @@ contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyM
         _checkWhitelisted(_strategy);
         IBaseStrategy(_strategy).withdraw(msg.sender, _amount);
         emit UserRequestWithdrawal(_strategy, msg.sender, _amount, block.number);
+    }
+
+    function _beforeDeposit(address underlyingToken, address _user, address _strategy, uint256 _amount) internal {
+        IERC20(underlyingToken).safeTransferFrom(_user, _strategy, _amount);
     }
 
     /**
