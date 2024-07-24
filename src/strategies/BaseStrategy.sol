@@ -24,6 +24,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
 
     address public fundManager;
     uint256 public floorAmount;
+    uint256 public sharesLimit;
 
     StrategyStatus internal depositStatus;
     StrategyStatus internal withdrawStatus;
@@ -33,7 +34,6 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
     address public strategyToken;
     mapping(address => uint256) internal userShares;
     uint256 public totalShares;
-    uint256 public sharesLimit;
 
     modifier onlyStrategyManager() {
         if (msg.sender != strategyManager) revert Errors.PermissionDenied();

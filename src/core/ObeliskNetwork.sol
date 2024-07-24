@@ -247,7 +247,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
      * @notice Contract version
      */
     function version() public pure override returns (uint8) {
-        return 4;
+        return 1;
     }
 
     /**

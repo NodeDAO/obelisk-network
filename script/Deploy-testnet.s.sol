@@ -48,7 +48,7 @@ contract HoleskyDeployObelisk is Script {
         _tokenAddrs[0] = address(_oBTC);
         _obeliskNetwork.initialize(_dao, _dao, _dao, address(_mintSecurity), _tokenAddrs, _mintStrategies);
 
-        // _mintSecurity.initialize(_dao, _dao, address(_obeliskNetwork));
+        _mintSecurity.initialize(_dao, _dao, address(_obeliskNetwork));
 
         address fbtc = deployStrategysFBTC(address(_oBTC), address(_strategyManager));
         address b2 = deployStrategysB2(address(_oBTC), address(_strategyManager));
