@@ -16,16 +16,17 @@ import "src/core/StrategyManager.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "forge-std/Script.sol";
 import "src/interfaces/IObeliskNetwork.sol";
+import "src/modules/WithdrawalRequest.sol";
+import "forge-std/console.sol";
 
 
 contract ObeliskNetworkTest is Test, Script {
-    
     
     address _obeliskNetworkImple = address(new ObeliskNetwork());
     ObeliskNetwork _obeliskNetwork = ObeliskNetwork(payable(new ERC1967Proxy(_obeliskNetworkImple, "")));
     StrategyManager public strategyManager;
     IBaseToken public ibaseToken;
-
+    
     OBBTC obBTC = new OBBTC(address(_obeliskNetwork));
 
     address _dao = vm.addr(1) ;
@@ -35,6 +36,7 @@ contract ObeliskNetworkTest is Test, Script {
     address _mintSecurityImple = address(new MintSecurity());
     MintSecurity _mintSecurity = MintSecurity(payable(new ERC1967Proxy(_mintSecurityImple, "")));
 
+
    function setUp() public {
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
         console.log("=====obBTC=====", address(obBTC));
@@ -43,11 +45,10 @@ contract ObeliskNetworkTest is Test, Script {
         address[] memory _tokenAddrs = new address[](1);
         _tokenAddrs[0] = address(obBTC);
         _obeliskNetwork.initialize(_dao, _dao, _dao, address(_mintSecurity), _tokenAddrs);
-
         _mintSecurity.initialize(_dao, _dao, address(_obeliskNetwork));
    }
 
-    function testMintFailures() public {
+function testMintFailures() public {
     // Test for minting from an unknown/unauthorized address
         address unknownAddress = address(0x1245);
         vm.expectRevert(Errors.PermissionDenied.selector);
@@ -93,7 +94,7 @@ contract ObeliskNetworkTest is Test, Script {
         
     }
 
-    function testRequestWithdrawals() public {
+function testRequestWithdrawals() public {
     vm.prank(address(_mintSecurity));
     IObeliskNetwork(_obeliskNetwork).mint(address(obBTC), user1, 200 * 10**18 );
     assertEq(IBaseToken(obBTC).balanceOf( user1), 200 * 10**18 );
@@ -113,10 +114,7 @@ contract ObeliskNetworkTest is Test, Script {
     // Check if user2 received the correct amount
     assertEq(IBaseToken(obBTC).balanceOf( user2), 150 * 10**18 );
     vm.stopPrank();
-
 }
-
-
 
 function testAddAsset() public {
     vm.prank(_dao);
@@ -146,6 +144,21 @@ function testAddAsset() public {
     uint256 finalLength = _obeliskNetwork.getAssetList().length;
     assert(finalLength == initialLength - 1);
 }
+
+function testBulkClaimWithdrawalsInvalidLength() public {
+        // Set up the test environment
+        address[] memory receivers = new address[](2);
+        receivers[0] = user1;
+        receivers[1] = user2;
+
+        uint256[][] memory requestIds = new uint256[][](1);
+        requestIds[0] = new uint256[](1);
+        requestIds[0][0] = 1;
+
+        // Call the bulkClaimWithdrawals function with an invalid length
+        vm.expectRevert(Errors.InvalidLength.selector);
+        _obeliskNetwork.bulkClaimWithdrawals(receivers, requestIds);
+    }
 
     struct RecoveryInfo {
         address from;
