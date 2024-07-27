@@ -9,5 +9,7 @@ import "src/tokens/BaseToken.sol";
  * @notice FBTC Yield
  */
 contract OYBTCFBTC is BaseToken {
-    constructor(address _tokenAdmin) BaseToken("Obelisk Yield BTC-FBTC", "oyBTC-fbtc", _tokenAdmin) {}
+    constructor(address _tokenAdmin, address _blackListAdmin)
+        BaseToken("Obelisk Yield BTC-FBTC", "oyBTC-fbtc", _tokenAdmin, _blackListAdmin)
+    {}
 }

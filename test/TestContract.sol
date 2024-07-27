@@ -5,14 +5,14 @@ import "src/tokens/BaseToken.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract TestToken is BaseToken {
-    constructor(string memory _name, string memory _symbol, address _tokenAdmin)
-        BaseToken(_name, _symbol, _tokenAdmin)
+    constructor(string memory _name, string memory _symbol, address _tokenAdmin, address _blackListAdmi)
+        BaseToken(_name, _symbol, _tokenAdmin, _blackListAdmi)
     {}
 }
 
 contract TestToken2 is BaseToken {
-    constructor(string memory _name, string memory _symbol, address _tokenAdmin)
-        BaseToken(_name, _symbol, _tokenAdmin)
+    constructor(string memory _name, string memory _symbol, address _tokenAdmin, address _blackListAdmi)
+        BaseToken(_name, _symbol, _tokenAdmin, _blackListAdmi)
     {}
 
     function decimals() public pure override returns (uint8) {

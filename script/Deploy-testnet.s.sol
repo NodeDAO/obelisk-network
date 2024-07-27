@@ -30,7 +30,7 @@ contract HoleskyDeployObelisk is Script {
 
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
 
-        OBTC _oBTC = new OBTC(address(_obeliskNetwork));
+        OBTC _oBTC = new OBTC(address(_obeliskNetwork), _dao);
         console.log("=====oBTC=====", address(_oBTC));
 
         address _mintSecurityImple = address(new MintSecurity());
@@ -71,9 +71,9 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====mintStrategy=====", address(_mintStrategy));
         console.log("=====mintStrategy2=====", address(_mintStrategy2));
 
-        address _testBTC = address(new TestToken("test BTC", "tBTC", _dao));
+        address _testBTC = address(new TestToken("test BTC", "tBTC", _dao, _dao));
         _mintStrategy.initialize(_dao, _dao, address(_obeliskNetwork), address(_testBTC), address(_oBTC), 10);
-        address _testBTC2 = address(new TestToken2("test BTC18", "tBTC18", _dao));
+        address _testBTC2 = address(new TestToken2("test BTC18", "tBTC18", _dao, _dao));
         _mintStrategy2.initialize(_dao, _dao, address(_obeliskNetwork), address(_testBTC2), address(_oBTC), 10);
 
         console.log("=====testBTC=====", address(_testBTC));
@@ -89,7 +89,7 @@ contract HoleskyDeployObelisk is Script {
         address _defiStrategyImple = address(new DefiStrategy());
         DefiStrategy _defiStrategyB2 = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
         console.log("=====defiStrategyB2=====", address(_defiStrategyB2));
-        OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2));
+        OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2), _dao);
         console.log("=====nBTCb2=====", address(nBTCb2));
 
         _defiStrategyB2.initialize(
@@ -103,7 +103,7 @@ contract HoleskyDeployObelisk is Script {
         address _defiStrategyImple = address(new DefiStrategy());
         DefiStrategy _defiStrategyBBL = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
         console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
-        OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL));
+        OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL), _dao);
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
         _defiStrategyBBL.initialize(
@@ -117,7 +117,7 @@ contract HoleskyDeployObelisk is Script {
         address _defiStrategyImple = address(new DefiStrategy());
         DefiStrategy _defiStrategyFBTC = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
         console.log("=====defiStrategyFBTC=====", address(_defiStrategyFBTC));
-        OYBTCFBTC oyBTCfbtc = new OYBTCFBTC(address(_defiStrategyFBTC));
+        OYBTCFBTC oyBTCfbtc = new OYBTCFBTC(address(_defiStrategyFBTC), _dao);
         console.log("=====oyBTCfbtc=====", address(oyBTCfbtc));
 
         _defiStrategyFBTC.initialize(

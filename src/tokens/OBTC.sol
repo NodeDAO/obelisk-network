@@ -9,5 +9,7 @@ import "src/tokens/BaseToken.sol";
  * @notice oBTC is an equivalent asset mapping of BTC
  */
 contract OBTC is BaseToken {
-    constructor(address _tokenAdmin) BaseToken("Obelisk BTC", "oBTC", _tokenAdmin) {}
+    constructor(address _tokenAdmin, address _blackListAdmin)
+        BaseToken("Obelisk BTC", "oBTC", _tokenAdmin, _blackListAdmin)
+    {}
 }

@@ -40,7 +40,7 @@ contract ObeliskNetworkTest is Test {
 
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
 
-        _oBTC = new OBTC(address(_obeliskNetwork));
+        _oBTC = new OBTC(address(_obeliskNetwork), _dao);
 
         console.log("=====obBTC=====", address(_oBTC));
 
@@ -57,11 +57,11 @@ contract ObeliskNetworkTest is Test {
         address _mintStrategyImple = address(new MintStrategy());
         _mintStrategy = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
 
-        _testBTC = new TestToken("test BTC", "tBTC", _dao);
+        _testBTC = new TestToken("test BTC", "tBTC", _dao, _dao);
         _mintStrategy.initialize(_ownerAddr, _dao, address(_obeliskNetwork), address(_testBTC), address(_oBTC), 50400);
 
         _mintStrategy2 = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
-        _testBTC2 = new TestToken2("test BTC 2", "tBTC2", _dao);
+        _testBTC2 = new TestToken2("test BTC 2", "tBTC2", _dao, _dao);
         _mintStrategy2.initialize(_ownerAddr, _dao, address(_obeliskNetwork), address(_testBTC2), address(_oBTC), 50400);
 
         address[] memory _tokenAddrs = new address[](1);
@@ -94,8 +94,8 @@ contract ObeliskNetworkTest is Test {
         _defiStrategyBBL = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
         console.log("=====defiStrategyB2=====", address(_defiStrategyB2));
         console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
-        OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2));
-        OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL));
+        OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2), _dao);
+        OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL), _dao);
         console.log("=====nBTCb2=====", address(nBTCb2));
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
@@ -339,7 +339,7 @@ contract ObeliskNetworkTest is Test {
     }
 
     function testAddAsset() public returns (address) {
-        OLTC _oltc = new OLTC(address(_obeliskNetwork));
+        OLTC _oltc = new OLTC(address(_obeliskNetwork), _dao);
         vm.prank(_dao);
         _obeliskNetwork.addAsset(address(_oltc));
         return address(_oltc);
@@ -351,7 +351,7 @@ contract ObeliskNetworkTest is Test {
     }
 
     function testFailAddAsset2() public {
-        OLTC _oltc = new OLTC(address(_obeliskNetwork));
+        OLTC _oltc = new OLTC(address(_obeliskNetwork), _dao);
         _obeliskNetwork.addAsset(address(_oltc));
     }
 
