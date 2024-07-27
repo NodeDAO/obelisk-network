@@ -23,6 +23,12 @@ abstract contract BlackList is Initializable, IBlackList {
         blackListAdmin = _blackListAdmin;
     }
 
+    function __BlackList_init_OnlyNotSet(address _blackListAdmin) internal {
+        if (blackListAdmin == address(0)) {
+            blackListAdmin = _blackListAdmin;
+        }
+    }
+
     function addBlackList(address _user) external onlyBlackListAdmin {
         isBlackListed[_user] = true;
         emit AddedBlackList(_user);

@@ -9,5 +9,7 @@ import "src/tokens/BaseToken.sol";
  * @notice B2 Yield
  */
 contract OYBTCB2 is BaseToken {
-    constructor(address _tokenAdmin) BaseToken("Obelisk Yield BTC-B2", "oyBTC-B2", _tokenAdmin) {}
+    constructor(address _tokenAdmin, address _blackListAdmin)
+        BaseToken("Obelisk Yield BTC-B2", "oyBTC-B2", _tokenAdmin, _blackListAdmin)
+    {}
 }

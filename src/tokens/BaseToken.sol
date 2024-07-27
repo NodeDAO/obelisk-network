@@ -21,8 +21,11 @@ abstract contract BaseToken is ERC20, Ownable, BlackList, IBaseToken {
         _;
     }
 
-    constructor(string memory _tokenName, string memory _tokenSymbol, address _tokenAdmin) ERC20(_tokenName, _tokenSymbol) {
+    constructor(string memory _tokenName, string memory _tokenSymbol, address _tokenAdmin, address _blackListAdmin)
+        ERC20(_tokenName, _tokenSymbol)
+    {
         tokenAdmin = _tokenAdmin;
+        __BlackList_init_OnlyNotSet(_blackListAdmin);
     }
 
     /**

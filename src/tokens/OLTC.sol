@@ -9,5 +9,7 @@ import "src/tokens/BaseToken.sol";
  * @notice oLTC is an equivalent asset mapping of LTC
  */
 contract OLTC is BaseToken {
-    constructor(address _tokenAdmin) BaseToken("Obelisk LTC", "oLTC", _tokenAdmin) {}
+    constructor(address _tokenAdmin, address _blackListAdmin)
+        BaseToken("Obelisk LTC", "oLTC", _tokenAdmin, _blackListAdmin)
+    {}
 }
