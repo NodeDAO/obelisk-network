@@ -171,10 +171,10 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
     /**
      * Whether to suspend or re-support assets
      * @param _token asset addr
-     * @param _status asset status
+     * @param _AssetStatus asset status
      */
-    function setAssetStatus(address _token, bool _status) external onlyDao {
-        _setAssetStatus(_token, _status);
+    function setAssetStatus(address _token, bool _AssetStatus) external onlyDao {
+        _setAssetStatus(_token, _AssetStatus);
     }
 
     /**
