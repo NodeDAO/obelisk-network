@@ -81,9 +81,9 @@ abstract contract Assets is Initializable, IAssets {
         }
     }
 
-    function _setAssetStatus(address _token, bool _status) internal {
-        emit AssetStatusChanged(_status);
-        assetPaused[_token] = _status;
+    function _setAssetStatus(address _token, bool _AssetStatus) internal {
+        emit AssetStatusChanged(_AssetStatus);
+        assetPaused[_token] = _AssetStatus;
     }
 
     /**
