@@ -49,18 +49,23 @@ contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyM
                 ++i;
             }
         }
-        address[] memory strategies = new address[](_number);
+        address[] memory _strategies = new address[](_number);
         uint256[] memory _shares = new uint256[](_number);
         uint256 j = 0;
         for (uint256 i = 0; i < _strategyListength;) {
             if (_sharesList[i] != 0) {
-                strategies[j] = whitelistedList[i];
+                _strategies[j] = whitelistedList[i];
                 _shares[j] = _sharesList[i];
-                j++;
+                unchecked {
+                    ++j;
+                }
+            }
+            unchecked {
+                ++i;
             }
         }
 
-        return (strategies, _shares);
+        return (_strategies, _shares);
     }
 
     /**
