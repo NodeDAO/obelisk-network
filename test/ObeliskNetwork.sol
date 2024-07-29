@@ -651,4 +651,103 @@ contract ObeliskNetworkTest is Test {
         assertEq(_testBTC.balanceOf(address(_mintStrategy)), 0);
         assertEq(_testBTC.balanceOf(address(_strategy)), 100000000);
     }
+
+    function testSetStrategyWhitelisted() public {
+        address[] memory _strategies = new address[](2);
+        _strategies[0] = address(1);
+        _strategies[1] = address(2);
+        vm.prank(_dao);
+        _mintStrategy.addStrategyWhitelisted(_strategies);
+        assertEq(_mintStrategy.isWhitelisted(address(1)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(2)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(3)), false);
+        assertEq(_mintStrategy.getWhitelistedList().length, 2);
+        assertEq(_mintStrategy.getWhitelistedList()[0], address(1));
+        assertEq(_mintStrategy.getWhitelistedList()[1], address(2));
+
+        _strategies[0] = address(1);
+        _strategies[1] = address(3);
+        vm.prank(_dao);
+        _mintStrategy.addStrategyWhitelisted(_strategies);
+        assertEq(_mintStrategy.isWhitelisted(address(1)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(2)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(3)), true);
+        assertEq(_mintStrategy.getWhitelistedList().length, 3);
+        assertEq(_mintStrategy.getWhitelistedList()[0], address(1));
+        assertEq(_mintStrategy.getWhitelistedList()[1], address(2));
+        assertEq(_mintStrategy.getWhitelistedList()[2], address(3));
+
+        _strategies[0] = address(0);
+        _strategies[1] = address(4);
+        vm.prank(_dao);
+        _mintStrategy.addStrategyWhitelisted(_strategies);
+        assertEq(_mintStrategy.isWhitelisted(address(0)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(1)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(2)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(3)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(4)), true);
+        assertEq(_mintStrategy.getWhitelistedList().length, 5);
+        assertEq(_mintStrategy.getWhitelistedList()[0], address(1));
+        assertEq(_mintStrategy.getWhitelistedList()[1], address(2));
+        assertEq(_mintStrategy.getWhitelistedList()[2], address(3));
+        assertEq(_mintStrategy.getWhitelistedList()[3], address(0));
+        assertEq(_mintStrategy.getWhitelistedList()[4], address(4));
+
+        _strategies[0] = address(0);
+        _strategies[1] = address(4);
+        vm.prank(_dao);
+        _mintStrategy.removeStrategyWhitelisted(_strategies);
+        assertEq(_mintStrategy.isWhitelisted(address(0)), false);
+        assertEq(_mintStrategy.isWhitelisted(address(1)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(2)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(3)), true);
+        assertEq(_mintStrategy.isWhitelisted(address(4)), false);
+        assertEq(_mintStrategy.getWhitelistedList().length, 3);
+        assertEq(_mintStrategy.getWhitelistedList()[0], address(1));
+        assertEq(_mintStrategy.getWhitelistedList()[1], address(2));
+        assertEq(_mintStrategy.getWhitelistedList()[2], address(3));
+    }
+
+    function testGetStakerStrategyList() public {
+        testDeposit();
+        (address[] memory addrs, uint256[] memory amounts) =
+            _strategyManager.getStakerStrategyList(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
+        assertEq(addrs.length, 2);
+        assertEq(amounts.length, 2);
+        assertEq(addrs[0], address(_defiStrategyB2));
+        assertEq(amounts[0], 100000);
+        assertEq(addrs[1], address(_defiStrategyBBL));
+        assertEq(amounts[1], 100000);
+    }
+
+    function testTokenBlackList() public {
+        vm.prank(address(_obeliskNetwork));
+        _oBTC.whiteListMint(100000000000, address(1));
+        vm.prank(address(_obeliskNetwork));
+        _oBTC.whiteListMint(100000000000, address(2));
+
+        assertEq(_oBTC.balanceOf(address(1)), 100000000000);
+        vm.prank(_dao);
+        _oBTC.addBlackList(address(1));
+        assertEq(true, _oBTC.isBlackListed(address(1)));
+        assertEq(false, _oBTC.isBlackListed(address(2)));
+    }
+
+    function testFailTokenBlackList2() public {
+        testTokenBlackList();
+        vm.prank(address(1));
+        _oBTC.transfer(address(2), 10000);
+    }
+
+    function testFailTokenBlackList3() public {
+        testTokenBlackList();
+        vm.prank(address(2));
+        _oBTC.transfer(address(1), 10000);
+    }
+
+    function testChangeTokenAdmin() public {
+        assertEq(_oBTC.blackListAdmin(), _dao);
+        _oBTC.setBlackListAdmin(address(1));
+        assertEq(_oBTC.blackListAdmin(), address(1));
+    }
 }
