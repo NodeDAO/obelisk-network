@@ -300,7 +300,7 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
         return 1;
     }
 
-    function setObeliskNetwork(address _obeliskNetwork) external {
+    function setObeliskNetwork(address _obeliskNetwork) external onlyDao {
         emit ObeliskNetworkChanged(obeliskNetwork, _obeliskNetwork);
         obeliskNetwork = _obeliskNetwork;
     }
