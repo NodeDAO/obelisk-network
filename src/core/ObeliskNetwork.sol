@@ -236,6 +236,15 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
     }
 
     /**
+     * change mintSecurityAddr
+     * @param _mintSecurityAddr mintSecurity contract address
+     */
+    function setMintSecurityAddr(address _mintSecurityAddr) external onlyDao {
+        emit MintSecurityAddrChanged(mintSecurityAddr, _mintSecurityAddr);
+        mintSecurityAddr = _mintSecurityAddr;
+    }
+
+    /**
      * Owner set dao addr
      * @param _dao dao addr
      */
