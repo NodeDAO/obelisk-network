@@ -32,7 +32,7 @@ contract DefiStrategy is BaseStrategy {
             _underlyingToken,
             _strategyToken,
             _sharesLimit,
-            StrategyStatus.Open,
+            StrategyStatus.Close,
             StrategyStatus.Close
         );
     }

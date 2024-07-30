@@ -120,6 +120,11 @@ contract ObeliskNetworkTest is Test {
             address(nBTCbbl)
         );
 
+        vm.prank(_fundManager);
+        _defiStrategyBBL.setStrategyStatus(IBaseStrategy.StrategyStatus.Open, IBaseStrategy.StrategyStatus.Close);
+        vm.prank(_fundManager);
+        _defiStrategyB2.setStrategyStatus(IBaseStrategy.StrategyStatus.Open, IBaseStrategy.StrategyStatus.Close);
+
         address[] memory _strategies = new address[](2);
         _strategies[0] = address(_defiStrategyB2);
         _strategies[1] = address(_defiStrategyBBL);
@@ -749,5 +754,20 @@ contract ObeliskNetworkTest is Test {
         assertEq(_oBTC.blackListAdmin(), _dao);
         _oBTC.setBlackListAdmin(address(1));
         assertEq(_oBTC.blackListAdmin(), address(1));
+    }
+
+    function testTotalWithdrawalAmount() public {
+        testTBTCDeposit();
+
+        vm.prank(address(1));
+        _oBTC.approve(address(_obeliskNetwork), 100000000);
+        address _nativeBTC = _obeliskNetwork.nativeBTCStrategy();
+        vm.prank(address(1));
+        _obeliskNetwork.requestWithdrawals(_nativeBTC, address(_oBTC), 100000000, "0x");
+
+        assertEq(_testBTC.balanceOf(address(_mintStrategy)), 100000000);
+        assertEq(_oBTC.balanceOf(address(1)), 0);
+        assertEq(_obeliskNetwork.totalWithdrawalAmount(address(_nativeBTC)), 100000000);
+        assertEq(_obeliskNetwork.totalWithdrawalAmount(address(_mintStrategy)), 0);
     }
 }
