@@ -42,6 +42,10 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
         _;
     }
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         address _ownerAddr,
         address _dao,
