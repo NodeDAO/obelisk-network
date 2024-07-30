@@ -127,12 +127,7 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
      * @param _user user address
      * @param _amount withdrawal amount
      */
-    function withdraw(address _token, address _user, uint256 _amount)
-        external
-        virtual
-        onlyObeliskNetwork
-        assetCheck(_token)
-    {
+    function withdraw(address _token, address _user, uint256 _amount) external onlyObeliskNetwork assetCheck(_token) {
         if (withdrawStatus != StrategyStatus.Open) {
             revert Errors.WithdrawalNotOpen();
         }

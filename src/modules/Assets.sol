@@ -15,7 +15,7 @@ abstract contract Assets is Initializable, IAssets {
     address[] internal assetList;
     mapping(address => bool) public assetPaused;
 
-    function __Assets_init(address[] memory _tokenAddrs) internal onlyInitializing {
+    function __Assets_init(address[] calldata _tokenAddrs) internal onlyInitializing {
         for (uint256 i = 0; i < _tokenAddrs.length; ++i) {
             address _token = _tokenAddrs[i];
             _checkAssets(_token);

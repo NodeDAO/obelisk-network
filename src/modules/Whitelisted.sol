@@ -21,9 +21,10 @@ abstract contract Whitelisted is Initializable, IWhitelisted {
     function __Whitelisted_init(address[] calldata _strategies) internal onlyInitializing {
         uint256 strategiesLength = _strategies.length;
         for (uint256 i = 0; i < strategiesLength;) {
-            isWhitelisted[_strategies[i]] = true;
-            whitelistedList.push(_strategies[i]);
-            emit AddedToWhitelist(_strategies[i]);
+            address _strategy = _strategies[i];
+            isWhitelisted[_strategy] = true;
+            whitelistedList.push(_strategy);
+            emit AddedToWhitelist(_strategy);
             unchecked {
                 ++i;
             }

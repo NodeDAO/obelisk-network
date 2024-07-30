@@ -34,7 +34,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         address _dao,
         address _blackListAdmin,
         address _mintSecurityAddr,
-        address[] memory _tokenAddrs,
+        address[] calldata _tokenAddrs,
         address[] calldata _mintStrategies
     ) public initializer {
         __Version_init(_ownerAddr);
@@ -82,7 +82,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
      * User application for withdrawing underlying assets
      * @param _strategy deposit strategy
      * @param _token he address of the asset to be minted
-     * @param _withdrawalAmount withdrawal amount
+     * @param _withdrawalAmount withdrawal amount, oBTC amount
      * @param _withdrawalAddr withdrawal addr, if the _strategy is not nativeBTCStrategy, it can be empty
      */
     function requestWithdrawals(
@@ -119,6 +119,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         if (!ok) {
             revert Errors.TransferFailed();
         }
+        // _withdrawalAmount is oBTC amount, decimals is 8
         _requestWithdrawals(_strategy, _token, _sender, _withdrawalAmount, _withdrawalAddr);
     }
 
