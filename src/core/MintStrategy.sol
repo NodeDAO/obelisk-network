@@ -59,9 +59,9 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
         assetAddr = _assetAddr;
 
         withdrawalDelayBlocks = _withdrawalDelayBlocks;
-        // Withdrawal is not enabled by default
+
         depositStatus = StrategyStatus.Open;
-        withdrawStatus = StrategyStatus.Close;
+        withdrawStatus = StrategyStatus.Open;
     }
 
     /**
@@ -195,7 +195,11 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
      * @return _depositStatus
      * @return _withdrawStatus
      */
-    function getStrategyStatus() public view returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus) {
+    function getStrategyStatus()
+        external
+        view
+        returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus)
+    {
         return (depositStatus, withdrawStatus);
     }
 

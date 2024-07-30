@@ -9,6 +9,7 @@ import "src/modules/Assets.sol";
 import "src/modules/Version.sol";
 import "src/modules/Whitelisted.sol";
 import "src/modules/WithdrawalRequest.sol";
+import "src/interfaces/IMintStrategy.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -98,10 +99,15 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
                 // Check whether the handling fee is prepaid
                 revert Errors.InvalidAmount();
             }
+
+            (, IMintStrategy.StrategyStatus _withdrawStatus) = IMintStrategy(_strategy).getStrategyStatus();
+            if (_withdrawStatus != IMintStrategy.StrategyStatus.Open) {
+                revert Errors.StrategyBTCWithdrawPaused();
+            }
         } else {
             // If it is a native BTC withdrawal, check whether it is suspended
             if (nativeBTCPaused) {
-                revert Errors.NativeBTCPaused();
+                revert Errors.NativeBTCWithdrawPaused();
             }
             // There is no pre-collection fee for native withdrawals, and the fee will be charged on the BTC chain
             if (msg.value != 0) {

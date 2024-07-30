@@ -8,6 +8,10 @@ interface IMintStrategy {
 
     }
 
+    function getStrategyStatus()
+        external
+        view
+        returns (StrategyStatus _depositStatus, StrategyStatus _withdrawStatus);
     function getWithdrawalDelayBlocks() external view returns (uint256);
     function deposit(address _token, address _user, uint256 _amount) external returns (uint256);
     function withdraw(address _token, address _user, uint256 _amount) external;

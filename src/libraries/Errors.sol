@@ -34,6 +34,7 @@ library Errors {
     error TransferFailed();
     error AssetDismatch();
     error ExceedDepositLimit();
-    error NativeBTCPaused();
+    error NativeBTCWithdrawPaused();
+    error StrategyBTCWithdrawPaused();
     error ExecuteFailed();
 }

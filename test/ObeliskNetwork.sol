@@ -15,6 +15,7 @@ import "src/core/MintSecurity.sol";
 import "src/core/MintStrategy.sol";
 import "src/core/StrategyManager.sol";
 import "src/interfaces/IBaseStrategy.sol";
+import "src/interfaces/IMintStrategy.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract ObeliskNetworkTest is Test {
@@ -569,6 +570,20 @@ contract ObeliskNetworkTest is Test {
         testTBTCDeposit();
         vm.prank(address(1));
         _oBTC.approve(address(_obeliskNetwork), 100000000);
+        vm.prank(address(1));
+        _obeliskNetwork.requestWithdrawals(address(_mintStrategy), address(_oBTC), 100000000, "0x");
+
+        assertEq(_testBTC.balanceOf(address(_mintStrategy)), 100000000);
+        assertEq(_oBTC.balanceOf(address(1)), 0);
+    }
+
+    function testFailTBTCWithdrawal() public {
+        testTBTCDeposit();
+        vm.prank(address(1));
+        _oBTC.approve(address(_obeliskNetwork), 100000000);
+
+        vm.prank(_dao);
+        _mintStrategy.setStrategyStatus(IMintStrategy.StrategyStatus.Open, IMintStrategy.StrategyStatus.Close);
         vm.prank(address(1));
         _obeliskNetwork.requestWithdrawals(address(_mintStrategy), address(_oBTC), 100000000, "0x");
 
