@@ -163,6 +163,58 @@ contract ObeliskNetworkTest is Test {
         assertEq(_oBTC.balanceOf(destAddr), stakingAmount);
     }
 
+    function testBulkMint() public {
+        address[] memory tokens = new address[](1);
+        bytes32[] memory txHashs = new bytes32[](1);
+        address[] memory destAddrs = new address[](1);
+        uint256[] memory stakingOutputIdxs = new uint256[](1);
+        uint256[] memory inclusionHeights = new uint256[](1);
+        uint256[] memory stakingAmounts = new uint256[](1);
+        MintSecurity.Signature[][] memory bulkSortedGuardianSignatures = new MintSecurity.Signature[][](1);
+
+        address token = address(_oBTC);
+        tokens[0] = token;
+        bytes32 txHash = 0x2c8c452919c6f1d89dec39215926ac4b1e1e258eff8d3d3019120986a76a738a;
+        txHashs[0] = txHash;
+        address destAddr = 0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8;
+        destAddrs[0] = destAddr;
+        uint256 stakingOutputIdx = 0;
+        stakingOutputIdxs[0] = stakingOutputIdx;
+        uint256 inclusionHeight = 2865235;
+        inclusionHeights[0] = inclusionHeight;
+        uint256 stakingAmount = 120000000;
+        stakingAmounts[0] = stakingAmount;
+        MintSecurity.Signature[] memory sortedGuardianSignatures = new MintSecurity.Signature[](3);
+
+        sortedGuardianSignatures[0] = MintSecurity.Signature({
+            r: 0x2baf05520e83bc494187cf71f9c343f82002e2346a0541b4ac110e8032dca126,
+            vs: 0x37459dc63db143cbef86ae9b0393cd16b181b1d9ac561fced18c23035f290da2
+        });
+
+        sortedGuardianSignatures[1] = MintSecurity.Signature({
+            r: 0x56657f42c6e54e0e03b0a2f0553ac5035971346b82029b0138e256e0255f4cfe,
+            vs: 0xf0f59e5b4b8fb5b3accac5b786403380c79208337d0543dccceca5885963fdc8
+        });
+
+        sortedGuardianSignatures[2] = MintSecurity.Signature({
+            r: 0x0a323c499c5f3ba1508119b3d29ee063c26a3312dad38dda7912f4a34a10aab7,
+            vs: 0x7620506989779ce6e5ea47624de9d3dfd9d83411174178e8d7aab83793fe75f8
+        });
+        bulkSortedGuardianSignatures[0] = sortedGuardianSignatures;
+
+        _mintSecurity.bulkMint(
+            tokens,
+            txHashs,
+            destAddrs,
+            stakingOutputIdxs,
+            inclusionHeights,
+            stakingAmounts,
+            bulkSortedGuardianSignatures
+        );
+
+        assertEq(_oBTC.balanceOf(destAddr), stakingAmount);
+    }
+
     function testFailMint() public {
         vm.prank(address(_dao));
         _mintSecurity.pause();
