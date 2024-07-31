@@ -29,6 +29,7 @@ library Errors {
     error CantRequestWithdrawal();
     error StrategyClosed();
     error StrategyNotWhitelisted();
+    error DuplicateStrategy();
     error WithdrawalNotOpen();
     error DepositNotOpen();
     error TransferFailed();
