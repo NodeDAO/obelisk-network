@@ -51,6 +51,7 @@ abstract contract BaseToken is ERC20, Ownable, BlackList, IBaseToken {
      * @param _account mint account
      */
     function whiteListMint(uint256 _amount, address _account) external onlyTokenAdmin {
+        if (_account == address(0)) revert Errors.InvalidAddr();
         _mint(_account, _amount);
     }
 
@@ -60,6 +61,7 @@ abstract contract BaseToken is ERC20, Ownable, BlackList, IBaseToken {
      * @param _account burn account
      */
     function whiteListBurn(uint256 _amount, address _account) external onlyTokenAdmin {
+        if (_account == address(0)) revert Errors.InvalidAddr();
         _burn(_account, _amount);
     }
 

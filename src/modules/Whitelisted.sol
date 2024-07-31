@@ -22,6 +22,9 @@ abstract contract Whitelisted is Initializable, IWhitelisted {
         uint256 strategiesLength = _strategies.length;
         for (uint256 i = 0; i < strategiesLength;) {
             address _strategy = _strategies[i];
+            if (_strategy == address(0)) {
+                revert Errors.InvalidAddr();
+            }
             if (isWhitelisted[_strategy]) {
                 revert Errors.DuplicateStrategy();
             }

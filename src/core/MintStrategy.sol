@@ -15,6 +15,7 @@ import "openzeppelin-contracts/token/ERC20/extensions/IERC20Metadata.sol";
  * @author Obelisk
  * @notice Receive ERC20 BTC assets to mint OBTC
  */
+
 contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintStrategy {
     using SafeERC20 for IERC20;
 
@@ -53,6 +54,13 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
         address _assetAddr,
         uint256 _withdrawalDelayBlocks
     ) public initializer {
+        if (
+            _ownerAddr == address(0) || _dao == address(0) || _obeliskNetwork == address(0)
+                || _underlyingToken == address(0) || _assetAddr == address(0)
+        ) {
+            revert Errors.InvalidAddr();
+        }
+
         __Version_init(_ownerAddr);
         __Dao_init(_dao);
 

@@ -39,7 +39,7 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
         internal
         onlyInitializing
     {
-        withdrawalDelayBlocks = _withdrawalDelayBlocks;
+        _setWithdrawalDelayBlocks(_withdrawalDelayBlocks);
         __BlackList_init(_blackListAdmin);
         nativeBTCPaused = false;
     }

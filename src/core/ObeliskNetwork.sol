@@ -38,6 +38,13 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         address[] calldata _tokenAddrs,
         address[] calldata _mintStrategies
     ) public initializer {
+        if (
+            _ownerAddr == address(0) || _dao == address(0) || _mintSecurityAddr == address(0)
+                || _blackListAdmin == address(0)
+        ) {
+            revert Errors.InvalidAddr();
+        }
+
         __Version_init(_ownerAddr);
         __Dao_init(_dao);
         __Assets_init(_tokenAddrs);
@@ -60,6 +67,10 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         // Check if the asset is suspended
         if (_isPausedAsset(_token)) {
             revert Errors.AssetPaused();
+        }
+
+        if (_to == address(0)) {
+            revert Errors.InvalidAddr();
         }
 
         IBaseToken(_token).whiteListMint(_mintAmount, _to);

@@ -37,6 +37,10 @@ contract MintSecurity is Initializable, Version, Dao, IMintSecurity {
     }
 
     function initialize(address _ownerAddr, address _dao, address _obeliskNetwork) public initializer {
+        if (_ownerAddr == address(0) || _dao == address(0) || _obeliskNetwork == address(0)) {
+            revert Errors.InvalidAddr();
+        }
+
         __Version_init(_ownerAddr);
         __Dao_init(_dao);
 
