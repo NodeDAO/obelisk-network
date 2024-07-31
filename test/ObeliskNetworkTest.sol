@@ -32,13 +32,19 @@ contract ObeliskNetworkTest is Test, Script {
     address _dao = vm.addr(1) ;
     address user1 = vm.addr(5);
     address user2 = vm.addr(6);
-
+    address  newBlackListAdmin  = vm.addr(7);
     address _mintSecurityImple = address(new MintSecurity());
     MintSecurity _mintSecurity = MintSecurity(payable(new ERC1967Proxy(_mintSecurityImple, "")));
 
 
+    address public testFrom;
+    address public testTo;
+    uint256 public testRequestId;
+    uint256 public testRequestAmount;
+    uint256 public testRecoveryDelayBlocks;
+
    function setUp() public {
-        console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
+        console.log("=====_obeliskNetwork=====", address(_obeliskNetwork));
         console.log("=====obBTC=====", address(obBTC));
         console.log("=====mintSecurity=====", address(_mintSecurity));
 
@@ -188,6 +194,59 @@ function testBulkClaimWithdrawalsInvalidLength() public {
         }
 
         return userRecoverys;
+    }
+
+    function testSetBlackListAdmin() public {
+        // Verify the initial state
+        assertEq(_obeliskNetwork.blackListAdmin(),_dao );
+
+        // Attempt to set the new BlackList admin from a non-DAO address
+        vm.prank(address(0x9876));
+        vm.expectRevert(abi.encodeWithSelector(Errors.PermissionDenied.selector));
+        _obeliskNetwork.setBlackListAdmin(newBlackListAdmin);
+
+        // Set the new BlackList admin (only DAO can do this)
+        vm.prank(_dao);
+        _obeliskNetwork.setBlackListAdmin(newBlackListAdmin);
+
+        // Verify the new BlackList admin
+        assertEq(_obeliskNetwork.blackListAdmin(), newBlackListAdmin);
+    }
+
+
+    function testFundRecovery() public {
+        testFrom = address(0x1234567890abcdef); // Replace with a valid Ethereum address
+        testTo = address(0xfedcba9876543210); // Replace with a valid Ethereum address
+        testRequestAmount = 1 * 10**17; // Replace with a valid request amount
+        testRequestId = 0; // Replace with a valid request ID
+
+        vm.prank(address(_mintSecurity));
+        IObeliskNetwork(_obeliskNetwork).mint(address(obBTC), testFrom, 1 * 10**18 );
+
+        // Initiate the fund recovery (only DAO can do this)
+        vm.prank(_dao);
+        _obeliskNetwork.initiateFundRecovery(testFrom, testTo, address(obBTC), testRequestAmount);
+        FundRecovery.RecoveryInfo  memory _recoveryInfo = _obeliskNetwork.getUserRecoverys(testTo)[0] ;
+        // Verify the initial state
+        assertEq(obBTC.balanceOf(testFrom), 1 * 10**18);
+        assertEq(obBTC.balanceOf(testTo), 0 );
+        // Assert that the first element of the recoveryInfo array matches the expected value
+        assertEq(_recoveryInfo.from, testFrom);
+        assertEq(_recoveryInfo.to, testTo);
+        assertEq(_recoveryInfo.requestAmount, testRequestAmount);
+        assertEq(_recoveryInfo.executed, 0);
+        // Fast-forward the block number to satisfy the recovery delay condition
+        vm.roll(block.number + _obeliskNetwork.recoveryDelayBlocks());
+
+        // Execute the fund recovery (only DAO can do this)
+        vm.prank(_dao);
+        _obeliskNetwork.executeFundRecovery(testRequestId);
+
+        // Verify the final state
+        assertEq(obBTC.balanceOf(testFrom), 1 * 10**18 - testRequestAmount);
+        assertEq(obBTC.balanceOf(testTo), testRequestAmount);
+        FundRecovery.RecoveryInfo memory afterRecoveryInfos = _obeliskNetwork.getUserRecoverys(testTo)[0] ;
+        assertEq(afterRecoveryInfos.executed, 1);  
     }
 
 }
