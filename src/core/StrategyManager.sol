@@ -35,10 +35,10 @@ contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyM
      * @return _shares
      */
     function getStakerStrategyList(address _user) public view returns (address[] memory, uint256[] memory) {
-        uint256 _strategyListength = whitelistedList.length;
-        uint256[] memory _sharesList = new uint256[](_strategyListength);
+        uint256 _strategyListLength = whitelistedList.length;
+        uint256[] memory _sharesList = new uint256[](_strategyListLength);
         uint256 _number = 0;
-        for (uint256 i = 0; i < _strategyListength;) {
+        for (uint256 i = 0; i < _strategyListLength;) {
             uint256 _share = IBaseStrategy(whitelistedList[i]).getUserShares(_user);
             if (_share != 0) {
                 _number++;
@@ -52,7 +52,7 @@ contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyM
         address[] memory _strategies = new address[](_number);
         uint256[] memory _shares = new uint256[](_number);
         uint256 j = 0;
-        for (uint256 i = 0; i < _strategyListength;) {
+        for (uint256 i = 0; i < _strategyListLength;) {
             if (_sharesList[i] != 0) {
                 _strategies[j] = whitelistedList[i];
                 _shares[j] = _sharesList[i];
@@ -105,7 +105,7 @@ contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyM
     function requestWithdrawal(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
         _checkWhitelisted(_strategy);
         IBaseStrategy(_strategy).requestWithdrawal(msg.sender, _amount);
-        emit UserWithdrawal(_strategy, msg.sender, _amount, block.number);
+        emit UserRequestWithdrawal(_strategy, msg.sender, _amount, block.number);
     }
 
     /**
@@ -117,7 +117,7 @@ contract StrategyManager is Initializable, Version, Dao, Whitelisted, IStrategyM
     function withdraw(address _strategy, uint256 _amount) external whenNotPaused nonReentrant {
         _checkWhitelisted(_strategy);
         IBaseStrategy(_strategy).withdraw(msg.sender, _amount);
-        emit UserRequestWithdrawal(_strategy, msg.sender, _amount, block.number);
+        emit UserWithdrawal(_strategy, msg.sender, _amount, block.number);
     }
 
     function _beforeDeposit(address underlyingToken, address _user, address _strategy, uint256 _amount) internal {
