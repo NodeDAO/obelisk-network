@@ -7,10 +7,9 @@ import "src/modules/Dao.sol";
 import "src/modules/Whitelisted.sol";
 import "src/modules/Call.sol";
 import "src/interfaces/IMintStrategy.sol";
-import "src/interfaces/IERC20Decimal.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-
+import "openzeppelin-contracts/token/ERC20/extensions/IERC20Metadata.sol";
 /**
  * @title Mint OBTC Strategy
  * @author Obelisk
@@ -110,8 +109,8 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
         }
 
         // The erc20 asset must implement the decimals method, which involves mapping between assets of different decimals
-        uint8 sourceDecimals = IERC20Decimal(address(underlyingToken)).decimals();
-        uint8 targetDecimals = IERC20Decimal(address(assetAddr)).decimals();
+        uint8 sourceDecimals = IERC20Metadata(address(underlyingToken)).decimals();
+        uint8 targetDecimals = IERC20Metadata(address(assetAddr)).decimals();
 
         // Calculate the number of tokens that should be minted based on the precision
         uint256 _mintAmount = convertAmount(_amount, sourceDecimals, targetDecimals);
@@ -135,8 +134,8 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
         if (withdrawStatus != StrategyStatus.Open) {
             revert Errors.WithdrawalNotOpen();
         }
-        uint8 targetDecimals = IERC20Decimal(address(underlyingToken)).decimals();
-        uint8 sourceDecimals = IERC20Decimal(address(assetAddr)).decimals();
+        uint8 targetDecimals = IERC20Metadata(address(underlyingToken)).decimals();
+        uint8 sourceDecimals = IERC20Metadata(address(assetAddr)).decimals();
         // Calculate the amount that users can withdraw based on the precision
         uint256 _transferAmount = convertAmount(_amount, sourceDecimals, targetDecimals);
 
