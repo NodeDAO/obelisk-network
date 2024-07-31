@@ -42,6 +42,8 @@ contract ObeliskNetworkTest is Test, Script {
     uint256 public testRequestId;
     uint256 public testRequestAmount;
     uint256 public testRecoveryDelayBlocks;
+    uint256 public constant MAX_WITHDRAWAL_DELAY_BLOCKS = 100;
+    address public newDao;
 
    function setUp() public {
         console.log("=====_obeliskNetwork=====", address(_obeliskNetwork));
@@ -248,5 +250,65 @@ function testBulkClaimWithdrawalsInvalidLength() public {
         FundRecovery.RecoveryInfo memory afterRecoveryInfos = _obeliskNetwork.getUserRecoverys(testTo)[0] ;
         assertEq(afterRecoveryInfos.executed, 1);  
     }
+
+
+    function testSetWithdrawalDelayBlocks() public {
+        uint256 validDelay = 50;
+        uint256 invalidDelay = 72000 + 1;
+
+
+        // Test setting a valid withdrawal delay
+        vm.prank(_dao);
+        _obeliskNetwork.setWithdrawalDelayBlocks(validDelay);
+        assertEq(_obeliskNetwork.withdrawalDelayBlocks(), validDelay);
+
+        // Test setting an invalid withdrawal delay
+        vm.expectRevert(abi.encodeWithSelector(Errors.DelayTooLarge.selector));
+        vm.prank(_dao);
+        _obeliskNetwork.setWithdrawalDelayBlocks(invalidDelay);
+
+    }
+
+    function testSetDao() public {
+        // Test setting a new DAO as the owner
+        newDao = vm.addr(22);
+        vm.startPrank(_dao);
+        _obeliskNetwork.setDao(newDao);
+        assertEq(_obeliskNetwork.dao(), newDao);
+        vm.stopPrank();
+
+        // Test that a non-owner cannot set the DAO
+        vm.startPrank(vm.addr(3));
+        vm.expectRevert("Ownable: caller is not the owner");
+        _obeliskNetwork.setDao(vm.addr(4));
+        vm.stopPrank();
+    }
+
+
+function testClaimWithdrawals() public {
+    // Set up the test scenario
+    testRequestWithdrawals();
+
+    // Prepare the test data
+    address receiver = user1;
+    uint256[] memory requestIds = new uint256[](1);
+    requestIds[0] = 0; // Replace with the actual request ID
+
+    // Advance the block number to satisfy the withdrawal delay
+    uint256 withdrawalDelayBlocks = _obeliskNetwork.withdrawalDelayBlocks();
+    vm.roll(block.number + withdrawalDelayBlocks);
+
+    // Call the claimWithdrawals function
+    vm.startPrank(receiver);
+    _obeliskNetwork.claimWithdrawals(receiver, requestIds);
+    vm.stopPrank();
+
+    // Verify the state changes
+    WithdrawalRequest.WithdrawalInfo[] memory withdrawalInfos = _obeliskNetwork.getUserWithdrawals(receiver);
+    assertEq(withdrawalInfos.length, 1);
+    assertEq(withdrawalInfos[0].claimed, 1);
+    assertEq(_obeliskNetwork.totalWithdrawalAmount(), 150 * 10**18);
+}
+
 
 }
