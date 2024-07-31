@@ -45,7 +45,7 @@ contract CefiStrategy is BaseStrategy {
      * @param _user user addr
      * @param _amount withdrawal amount
      */
-    function requestWithdrawal(address _user, uint256 _amount) external override onlyStrategyManager {
+    function requestWithdrawal(address _user, uint256 _amount) external override onlyStrategyManager nonReentrant {
         if (withdrawStatus != StrategyStatus.Close) {
             revert Errors.CantRequestWithdrawal();
         }
@@ -60,7 +60,7 @@ contract CefiStrategy is BaseStrategy {
      * @param _user user addr
      * @param _amount withdrawa amount
      */
-    function withdraw(address _user, uint256 _amount) external override onlyStrategyManager {
+    function withdraw(address _user, uint256 _amount) external override onlyStrategyManager nonReentrant {
         if (withdrawStatus != StrategyStatus.Open) {
             revert Errors.WithdrawalNotOpen();
         }
@@ -69,9 +69,10 @@ contract CefiStrategy is BaseStrategy {
             revert Errors.NoWithdrawalRequested();
         }
 
-        _withdraw(_user, _amount);
         pendingWithdrawal[_user] = 0;
         totalPendingWithdrawal -= _amount;
+
+        _withdraw(_user, _amount);
     }
 
     /**

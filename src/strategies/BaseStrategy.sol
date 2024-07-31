@@ -134,7 +134,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
         }
     }
 
-    function deposit(address _user, uint256 _amount) external onlyStrategyManager {
+    function deposit(address _user, uint256 _amount) external onlyStrategyManager nonReentrant {
         if (_amount < floorAmount) {
             revert Errors.InvalidAmount();
         }

@@ -161,7 +161,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
      * @param _receiver receiver addr
      * @param _requestIds withdrawal request id
      */
-    function claimWithdrawals(address _receiver, uint256[] memory _requestIds) public whenNotPaused {
+    function claimWithdrawals(address _receiver, uint256[] memory _requestIds) public whenNotPaused nonReentrant {
         for (uint256 i = 0; i < _requestIds.length; ++i) {
             uint256 _requestId = _requestIds[i];
 
