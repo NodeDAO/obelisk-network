@@ -20,6 +20,7 @@ interface IMintStrategy {
     event WithdrawalStatusChanged(StrategyStatus _oldStatus, StrategyStatus _status);
     event ObeliskNetworkChanged(address obeliskNetwork, address _obeliskNetwork);
     event Withdrawal(address _strategy, address _underlyingToken, address _user, uint256 _amount);
+    event WithdrawalDelayChanged(uint256 _oldWithdrawalDelayBlocks, uint256 _withdrawalDelayBlocks);
     event Deposit(address _strategy, address _underlyingToken, address _user, uint256 _amount);
     event TxExecuted(uint256 _value, address _to, bytes _data);
 }

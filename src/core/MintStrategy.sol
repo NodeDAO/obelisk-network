@@ -84,6 +84,15 @@ contract MintStrategy is Initializable, Version, Dao, Whitelisted, Call, IMintSt
     }
 
     /**
+     * Set delay block for native withdrawals
+     * @param _withdrawalDelayBlocks withdrawal delay block
+     */
+    function setWithdrawalDelayBlocks(uint256 _withdrawalDelayBlocks) public onlyDao {
+        emit WithdrawalDelayChanged(withdrawalDelayBlocks, _withdrawalDelayBlocks);
+        withdrawalDelayBlocks = _withdrawalDelayBlocks;
+    }
+
+    /**
      * Amounts are calculated based on the precision of different tokens to ensure 1:1
      * @param amount amount
      * @param sourceDecimals  source token decimals
