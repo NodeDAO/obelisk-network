@@ -13,8 +13,8 @@ import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
  * @notice Provides basic functions for withdrawal orders.
  */
 abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequest {
-    address public constant nativeBTCStrategy = 0x000000000000000000000000000000000000000b;
-    bool public nativeBTCPaused;
+    address public constant nativeWithdrawStrategy = 0x000000000000000000000000000000000000000b;
+    bool public nativeWithdrawPaused;
 
     struct WithdrawalInfo {
         uint96 withdrawalHeight;
@@ -41,7 +41,7 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
     {
         _setWithdrawalDelayBlocks(_withdrawalDelayBlocks);
         __BlackList_init(_blackListAdmin);
-        nativeBTCPaused = false;
+        nativeWithdrawPaused = false;
     }
 
     /**
@@ -108,7 +108,7 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
     function getWithdrawalDelayBlocks(address _strategy) internal view returns (uint256, bool) {
         uint256 _withdrawalDelayBlocks = 0;
         bool isNativeStrategy = false;
-        if (_strategy == nativeBTCStrategy) {
+        if (_strategy == nativeWithdrawStrategy) {
             _withdrawalDelayBlocks = withdrawalDelayBlocks;
             isNativeStrategy = true;
         } else {
@@ -135,10 +135,13 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
         }
 
         if (!isNativeStrategy) {
+            // Withdrawal of erc20 assets, transfer of corresponding assets to users
             IMintStrategy(_userWithdrawal.strategy).withdraw(
                 _userWithdrawal.token, _receiver, _userWithdrawal.withdrawalAmount
             );
         }
+        // If it is a native asset withdrawal,
+        // the custody service will monitor the withdrawal event and complete the payment asynchronously
 
         withdrawalQueue[_receiver][_requestId].claimed = 1;
 
@@ -156,8 +159,8 @@ abstract contract WithdrawalRequest is Initializable, BlackList, IWithdrawalRequ
     }
 
     function _setNativeBTCPaused(bool _status) internal {
-        emit NativeBTCPausedChanged(nativeBTCPaused, _status);
-        nativeBTCPaused = _status;
+        emit NativeBTCPausedChanged(nativeWithdrawPaused, _status);
+        nativeWithdrawPaused = _status;
     }
 
     function _setNonNativeWithdrawalFee(uint256 _nonNativeWithdrawalFee) internal {

@@ -103,7 +103,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         uint256 _withdrawalAmount,
         bytes memory _withdrawalAddr
     ) external payable whenNotPaused {
-        if (_strategy != nativeBTCStrategy) {
+        if (_strategy != nativeWithdrawStrategy) {
             // If it is a deposit strategy, check whether the strategy address is recognized
             _checkWhitelisted(_strategy);
             if (nonNativeWithdrawalFee != msg.value) {
@@ -116,8 +116,8 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
                 revert Errors.StrategyBTCWithdrawPaused();
             }
         } else {
-            // If it is a native BTC withdrawal, check whether it is suspended
-            if (nativeBTCPaused) {
+            // If it is a native withdrawal, check whether it is suspended
+            if (nativeWithdrawPaused) {
                 revert Errors.NativeBTCWithdrawPaused();
             }
             // There is no pre-collection fee for native withdrawals, and the fee will be charged on the BTC chain

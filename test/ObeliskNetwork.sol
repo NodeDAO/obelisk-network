@@ -828,7 +828,7 @@ contract ObeliskNetworkTest is Test {
 
         vm.prank(address(1));
         _oBTC.approve(address(_obeliskNetwork), 100000000);
-        address _nativeBTC = _obeliskNetwork.nativeBTCStrategy();
+        address _nativeBTC = _obeliskNetwork.nativeWithdrawStrategy();
         vm.prank(address(1));
         _obeliskNetwork.requestWithdrawals(_nativeBTC, address(_oBTC), 100000000, "0x");
 
