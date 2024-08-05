@@ -104,9 +104,17 @@ contract MainnetDeployObelisk is Script {
         // transfer owner
         oyBTCb2.transferOwnership(_ownerAddr);
         console.log("=====nBTCb2=====", address(oyBTCb2));
-
+        address[] memory _whitelistedStrategies = new address[](0);
         _defiStrategyB2.initialize(
-            _ownerAddr, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_oBTC), address(oyBTCb2)
+            _ownerAddr,
+            _dao,
+            _strategyManager,
+            _dao,
+            10000,
+            10000000000000,
+            address(_oBTC),
+            address(oyBTCb2),
+            _whitelistedStrategies
         );
 
         return address(_defiStrategyB2);
@@ -123,9 +131,17 @@ contract MainnetDeployObelisk is Script {
         // transfer owner
         oyBTCbbl.transferOwnership(_ownerAddr);
         console.log("=====nBTCbbl=====", address(oyBTCbbl));
-
+        address[] memory _whitelistedStrategies = new address[](0);
         _defiStrategyBBL.initialize(
-            _ownerAddr, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_oBTC), address(oyBTCbbl)
+            _ownerAddr,
+            _dao,
+            _strategyManager,
+            _dao,
+            10000,
+            10000000000000,
+            address(_oBTC),
+            address(oyBTCbbl),
+            _whitelistedStrategies
         );
 
         return address(_defiStrategyBBL);
@@ -142,9 +158,17 @@ contract MainnetDeployObelisk is Script {
         // transfer owner
         oyBTCfbtc.transferOwnership(_ownerAddr);
         console.log("=====oyBTCfbtc=====", address(oyBTCfbtc));
-
+        address[] memory _whitelistedStrategies = new address[](0);
         _defiStrategyFBTC.initialize(
-            _ownerAddr, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_oBTC), address(oyBTCfbtc)
+            _ownerAddr,
+            _dao,
+            _strategyManager,
+            _dao,
+            10000,
+            10000000000000,
+            address(_oBTC),
+            address(oyBTCfbtc),
+            _whitelistedStrategies
         );
 
         return address(_defiStrategyFBTC);

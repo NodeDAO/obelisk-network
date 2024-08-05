@@ -100,6 +100,7 @@ contract ObeliskNetworkTest is Test {
         console.log("=====nBTCb2=====", address(nBTCb2));
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
+        address[] memory _whitelistedStrategies = new address[](0);
         _defiStrategyB2.initialize(
             _ownerAddr,
             _dao,
@@ -108,7 +109,8 @@ contract ObeliskNetworkTest is Test {
             10000,
             10000000000000,
             address(_oBTC),
-            address(nBTCb2)
+            address(nBTCb2),
+            _whitelistedStrategies
         );
         _defiStrategyBBL.initialize(
             _ownerAddr,
@@ -118,7 +120,8 @@ contract ObeliskNetworkTest is Test {
             10000,
             10000000000000,
             address(_oBTC),
-            address(nBTCbbl)
+            address(nBTCbbl),
+            _whitelistedStrategies
         );
 
         vm.prank(_fundManager);

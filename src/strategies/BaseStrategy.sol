@@ -55,10 +55,13 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
         address _strategyToken,
         uint256 _sharesLimit,
         StrategyStatus _depositStatus,
-        StrategyStatus _withdrawStatus
+        StrategyStatus _withdrawStatus,
+        address[] calldata _whitelistedStrategies
     ) internal onlyInitializing {
         __Version_init(_ownerAddr);
         __Dao_init(_dao);
+
+        __Whitelisted_init(_whitelistedStrategies);
         strategyManager = _strategyManager;
         fundManager = _fundManager;
         floorAmount = _floorAmount;

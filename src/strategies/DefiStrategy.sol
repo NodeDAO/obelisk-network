@@ -21,7 +21,8 @@ contract DefiStrategy is BaseStrategy {
         uint256 _floorAmount,
         uint256 _sharesLimit,
         address _underlyingToken,
-        address _strategyToken
+        address _strategyToken,
+        address[] calldata _whitelistedStrategies
     ) public initializer {
         __BaseStrategy_init(
             _ownerAddr,
@@ -33,7 +34,8 @@ contract DefiStrategy is BaseStrategy {
             _strategyToken,
             _sharesLimit,
             StrategyStatus.Close,
-            StrategyStatus.Close
+            StrategyStatus.Close,
+            _whitelistedStrategies
         );
     }
 

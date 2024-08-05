@@ -91,9 +91,17 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====defiStrategyB2=====", address(_defiStrategyB2));
         OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2), _dao);
         console.log("=====nBTCb2=====", address(nBTCb2));
-
+        address[] memory _whitelistedStrategies = new address[](0);
         _defiStrategyB2.initialize(
-            _dao, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_obBTC), address(nBTCb2)
+            _dao,
+            _dao,
+            _strategyManager,
+            _dao,
+            10000,
+            10000000000000,
+            address(_obBTC),
+            address(nBTCb2),
+            _whitelistedStrategies
         );
 
         return address(_defiStrategyB2);
@@ -105,9 +113,17 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
         OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL), _dao);
         console.log("=====nBTCbbl=====", address(nBTCbbl));
-
+        address[] memory _whitelistedStrategies = new address[](0);
         _defiStrategyBBL.initialize(
-            _dao, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_obBTC), address(nBTCbbl)
+            _dao,
+            _dao,
+            _strategyManager,
+            _dao,
+            10000,
+            10000000000000,
+            address(_obBTC),
+            address(nBTCbbl),
+            _whitelistedStrategies
         );
 
         return address(_defiStrategyBBL);
@@ -119,9 +135,17 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====defiStrategyFBTC=====", address(_defiStrategyFBTC));
         OYBTCFBTC oyBTCfbtc = new OYBTCFBTC(address(_defiStrategyFBTC), _dao);
         console.log("=====oyBTCfbtc=====", address(oyBTCfbtc));
-
+        address[] memory _whitelistedStrategies = new address[](0);
         _defiStrategyFBTC.initialize(
-            _dao, _dao, _strategyManager, _dao, 10000, 10000000000000, address(_obBTC), address(oyBTCfbtc)
+            _dao,
+            _dao,
+            _strategyManager,
+            _dao,
+            10000,
+            10000000000000,
+            address(_obBTC),
+            address(oyBTCfbtc),
+            _whitelistedStrategies
         );
 
         return address(_defiStrategyFBTC);
