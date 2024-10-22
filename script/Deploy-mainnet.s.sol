@@ -9,6 +9,7 @@ import "src/tokens/OYBTCB2.sol";
 import "src/tokens/OYBTCBBN.sol";
 import "src/tokens/OYBTCFBTC.sol";
 import "src/core/ObeliskNetwork.sol";
+import "src/core/ObeliskCustody.sol";
 import "src/strategies/DefiStrategy.sol";
 import "src/core/MintSecurity.sol";
 import "src/core/MintStrategy.sol";
@@ -172,5 +173,29 @@ contract MainnetDeployObelisk is Script {
         );
 
         return address(_defiStrategyFBTC);
+    }
+}
+
+// forge script script/Deploy-mainnet.s.sol:MainnetDeployObeliskCustody  --rpc-url $MAINNET_RPC_URL --broadcast --verify  --retries 10 --delay 30
+contract MainnetDeployObeliskCustody is Script {
+    address _dao = 0x8cC49b20c1d8B7129D76ca3E9EFacD968728ca95;
+    address _owner = 0xe4c555c2aa8F7FDB7Baf90039b3A583c8E312f20;
+    
+    function setUp() public {}
+
+    function run() public {
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        vm.startBroadcast(deployerPrivateKey);
+
+        address _obeliskCustodyImple = address(new ObeliskCustody());
+        ObeliskCustody _obeliskCustody = ObeliskCustody(payable(new ERC1967Proxy(_obeliskCustodyImple, "")));
+
+        console.log("=====obeliskCustodyImple=====", address(_obeliskCustody));
+
+        string[] memory marks = new string[](0);
+        string[] memory btcAddrs = new string[](0);
+        _obeliskCustody.initialize(_owner, _dao, marks, btcAddrs);
+
+        vm.stopBroadcast();
     }
 }

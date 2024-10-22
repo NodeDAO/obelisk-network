@@ -9,6 +9,7 @@ import "src/tokens/OYBTCB2.sol";
 import "src/tokens/OYBTCBBN.sol";
 import "src/tokens/OYBTCFBTC.sol";
 import "src/core/ObeliskNetwork.sol";
+import "src/core/ObeliskCustody.sol";
 import "src/strategies/DefiStrategy.sol";
 import "src/core/MintSecurity.sol";
 import "src/core/MintStrategy.sol";
@@ -149,5 +150,30 @@ contract HoleskyDeployObelisk is Script {
         );
 
         return address(_defiStrategyFBTC);
+    }
+}
+
+// forge script script/Deploy-testnet.s.sol:HoleskyDeployObeliskCustody  --rpc-url $HOLESKY_RPC_URL --broadcast --verify  --retries 10 --delay 30
+contract HoleskyDeployObeliskCustody is Script {
+    address _dao = 0xF5ade6B61BA60B8B82566Af0dfca982169a470Dc;
+
+    function setUp() public {}
+
+    function run() public {
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        vm.startBroadcast(deployerPrivateKey);
+
+        address _obeliskCustodyImple = address(new ObeliskCustody());
+        ObeliskCustody _obeliskCustody = ObeliskCustody(payable(new ERC1967Proxy(_obeliskCustodyImple, "")));
+
+        console.log("=====obeliskCustodyImple=====", address(_obeliskCustody));
+
+        string[] memory marks = new string[](1);
+        marks[0]= "custody";
+        string[] memory btcAddrs = new string[](1);
+        btcAddrs[0] = "tb1qdlexklc4kq8nzntqkkay06zyjfu790jsuj3wxr";
+        _obeliskCustody.initialize(_dao, _dao, marks, btcAddrs);
+
+        vm.stopBroadcast();
     }
 }
