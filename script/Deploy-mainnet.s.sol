@@ -17,9 +17,10 @@ import "src/core/StrategyManager.sol";
 import "src/TimelockController.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-// forge script script/Deploy-mainnet.s.sol:MainnetDeployObelisk  --rpc-url $MAINNET_RPC_URL --broadcast --verify  --retries 10 --delay 30
+// forge script script/Deploy-mainnet.s.sol:MainnetDeployObelisk  --rpc-url $EXSAT_RPC_URL --broadcast --legacy --gas-price 50000000 --verify --verifier=blockscout --verifier-url=https://scan.exsat.network/api/ --retries 10 --delay 30
 contract MainnetDeployObelisk is Script {
-    address _dao = 0x8cC49b20c1d8B7129D76ca3E9EFacD968728ca95;
+    address _dao = 0xc1c6c9D10a6Fe5FBCA2E67EBC72229d9855a7ADb;
+    address _owner = 0xc1c6c9D10a6Fe5FBCA2E67EBC72229d9855a7ADb;
 
     function setUp() public {}
 
@@ -27,34 +28,36 @@ contract MainnetDeployObelisk is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        address[] memory proposers = new address[](2);
-        address[] memory executors = new address[](1);
-        proposers[0] = 0x3E29BF7B650b8910F3B4DDda5b146e8716c683a6; // nodedao.eth
-        proposers[1] = _dao;
-        executors[0] = _dao;
+        // address[] memory proposers = new address[](2);
+        // address[] memory executors = new address[](1);
+        // proposers[0] = 0x3E29BF7B650b8910F3B4DDda5b146e8716c683a6; // nodedao.eth
+        // proposers[1] = _dao;
+        // executors[0] = _dao;
 
-        address _owner = address(new TimelockController(3600, proposers, executors, address(0)));
-        console.log("=====timelock=====", address(_owner));
+        // address _owner = address(new TimelockController(3600, proposers, executors, address(0)));
+        // console.log("=====timelock=====", address(_owner));
+
+        OBTC _oBTC = new OBTC(address(0), _dao);
+        console.log("=====oBTC=====", address(_oBTC));
 
         address _obeliskNetworkImple = address(new ObeliskNetwork());
         ObeliskNetwork _obeliskNetwork = ObeliskNetwork(payable(new ERC1967Proxy(_obeliskNetworkImple, "")));
 
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
 
-        OBTC _oBTC = new OBTC(address(_obeliskNetwork), _dao);
-        // transfer owner
+
+        _oBTC.changeTokenAdmin(address(_obeliskNetwork));
         _oBTC.transferOwnership(_owner);
-        console.log("=====oBTC=====", address(_oBTC));
 
         address _mintSecurityImple = address(new MintSecurity());
         MintSecurity _mintSecurity = MintSecurity(payable(new ERC1967Proxy(_mintSecurityImple, "")));
 
         console.log("=====mintSecurity=====", address(_mintSecurity));
 
-        address _strategyManagerImple = address(new StrategyManager());
-        StrategyManager _strategyManager = StrategyManager(payable(new ERC1967Proxy(_strategyManagerImple, "")));
+        // address _strategyManagerImple = address(new StrategyManager());
+        // StrategyManager _strategyManager = StrategyManager(payable(new ERC1967Proxy(_strategyManagerImple, "")));
 
-        console.log("=====strategyManager=====", address(_strategyManager));
+        // console.log("=====strategyManager=====", address(_strategyManager));
 
         address[] memory _mintStrategies = deployMintStrategys(_owner, address(_obeliskNetwork), address(_oBTC));
         address[] memory _tokenAddrs = new address[](1);
@@ -63,15 +66,16 @@ contract MainnetDeployObelisk is Script {
 
         _mintSecurity.initialize(_owner, _dao, address(_obeliskNetwork));
 
-        address fbtc = deployStrategysFBTC(_owner, address(_oBTC), address(_strategyManager));
-        address b2 = deployStrategysB2(_owner, address(_oBTC), address(_strategyManager));
-        address bbl = deployStrategysBBL(_owner, address(_oBTC), address(_strategyManager));
-        address[] memory _strategies = new address[](3);
-        _strategies[0] = address(b2);
-        _strategies[1] = address(bbl);
-        _strategies[2] = address(fbtc);
+        // address fbtc = deployStrategysFBTC(_owner, address(_oBTC), address(_strategyManager));
+        // address b2 = deployStrategysB2(_owner, address(_oBTC), address(_strategyManager));
+        // address bbl = deployStrategysBBL(_owner, address(_oBTC), address(_strategyManager));
+        // address[] memory _strategies = new address[](3);
+        // _strategies[0] = address(b2);
+        // _strategies[1] = address(bbl);
+        // _strategies[2] = address(fbtc);
 
-        _strategyManager.initialize(_owner, _dao, _strategies);
+        // _strategyManager.initialize(_owner, _dao, _strategies);
+
 
         vm.stopBroadcast();
     }
@@ -82,12 +86,12 @@ contract MainnetDeployObelisk is Script {
     {
         address _mintStrategyImple = address(new MintStrategy());
         MintStrategy _mintStrategy = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
-        address fbtc = 0xC96dE26018A54D51c097160568752c4E3BD6C364;
+        address ibtc = 0x8154Aaf094c2f03Ad550B6890E1d4264B5DdaD9A;
 
-        console.log("=====mintStrategy-fbtc=====", address(_mintStrategy));
-        console.log("=====fbtc=====", address(fbtc));
+        console.log("=====mintStrategy-ibtc=====", address(_mintStrategy));
+        console.log("=====ibtc=====", address(ibtc));
 
-        _mintStrategy.initialize(_ownerAddr, _dao, address(_obeliskNetwork), address(fbtc), address(_oBTC), 21600); // delay 3 day
+        _mintStrategy.initialize(_ownerAddr, _dao, address(_obeliskNetwork), address(ibtc), address(_oBTC), 21600); // delay 3 day
 
         address[] memory _mintStrategies = new address[](1);
         _mintStrategies[0] = address(_mintStrategy);
@@ -180,7 +184,7 @@ contract MainnetDeployObelisk is Script {
 contract MainnetDeployObeliskCustody is Script {
     address _dao = 0x8cC49b20c1d8B7129D76ca3E9EFacD968728ca95;
     address _owner = 0xe4c555c2aa8F7FDB7Baf90039b3A583c8E312f20;
-    
+
     function setUp() public {}
 
     function run() public {
