@@ -4,7 +4,7 @@ pragma solidity 0.8.12;
 import "src/libraries/Errors.sol";
 import "src/interfaces/IObeliskNetwork.sol";
 import "src/interfaces/IMintStrategy.sol";
-import "src/interfaces/IMintableBurnable.sol";
+import "src/interfaces/IMintableERC20.sol";
 import "src/modules/Dao.sol";
 import "src/modules/Assets.sol";
 import "src/modules/Version.sol";
@@ -75,7 +75,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         }
 
         address _admin = _getAssetAdmin(_token);
-        IMintableBurnable(_admin).whiteListMint(_mintAmount, _to);
+        IMintableERC20(_admin).mint(_to, _mintAmount);
     }
 
     /**
@@ -89,7 +89,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
         address _user = msg.sender;
         uint256 _mintAmount = IMintStrategy(_strategy).deposit(_token, _user, _amount);
         address _admin = _getAssetAdmin(_token);
-        IMintableBurnable(_admin).whiteListMint(_mintAmount, _user);
+        IMintableERC20(_admin).mint(_user, _mintAmount);
         emit Deposit(_strategy, _token, _mintAmount);
     }
 
@@ -174,7 +174,7 @@ contract ObeliskNetwork is Initializable, Version, Dao, Assets, WithdrawalReques
 
             (uint256 _withdrawalAmount, address _token) = _claimWithdrawals(_receiver, _requestId);
             address _admin = _getAssetAdmin(_token);
-            IMintableBurnable(_admin).whiteListBurn(_withdrawalAmount, address(this));
+            IMintableERC20(_admin).burn(address(this), _withdrawalAmount);
         }
     }
 

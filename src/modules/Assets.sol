@@ -5,6 +5,8 @@ import "src/libraries/Errors.sol";
 import "src/interfaces/IBaseToken.sol";
 import "src/interfaces/IAssets.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IAccessControl} from "openzeppelin-contracts/access/IAccessControl.sol";
+import {IMintableERC20} from "src/interfaces/IMintableERC20.sol";
 
 /**
  * @title Asset Management
@@ -29,7 +31,10 @@ abstract contract Assets is Initializable, IAssets {
     }
 
     function _checkAssets(address _token) internal view {
-        if (IBaseToken(_token).tokenAdmin() != address(this)) {
+        if (
+            !IAccessControl(_token).hasRole(IMintableERC20(_token).minterRole(), address(this))
+                || !IAccessControl(_token).hasRole(IMintableERC20(_token).burnerRole(), address(this))
+        ) {
             revert Errors.InvalidAsset();
         }
         if (_isSupportedAsset(_token)) {

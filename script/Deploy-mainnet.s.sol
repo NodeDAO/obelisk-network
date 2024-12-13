@@ -3,11 +3,7 @@ pragma solidity 0.8.12;
 
 import "forge-std/console.sol";
 import "forge-std/Script.sol";
-import "src/tokens/OBTC.sol";
-import {TestToken, TestToken2} from "test/TestContract.sol";
-import "src/tokens/OYBTCB2.sol";
-import "src/tokens/OYBTCBBN.sol";
-import "src/tokens/OYBTCFBTC.sol";
+import "src/tokens/ObeliskBTC.sol";
 import "src/core/ObeliskNetwork.sol";
 import "src/core/ObeliskCustody.sol";
 import "src/strategies/DefiStrategy.sol";
@@ -22,32 +18,24 @@ contract MainnetDeployObelisk is Script {
     address _dao = 0xc1c6c9D10a6Fe5FBCA2E67EBC72229d9855a7ADb;
     address _owner = 0xc1c6c9D10a6Fe5FBCA2E67EBC72229d9855a7ADb;
 
+    // modify obtc address for first deploy ObeliskBTC
+    ObeliskBTC _obeliskBTC = ObeliskBTC(0x787652637307A049f4454f6F8F9D5Ba219200fd9);
+
     function setUp() public {}
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        // address[] memory proposers = new address[](2);
-        // address[] memory executors = new address[](1);
-        // proposers[0] = 0x3E29BF7B650b8910F3B4DDda5b146e8716c683a6; // nodedao.eth
-        // proposers[1] = _dao;
-        // executors[0] = _dao;
-
-        // address _owner = address(new TimelockController(3600, proposers, executors, address(0)));
-        // console.log("=====timelock=====", address(_owner));
-
-        OBTC _oBTC = new OBTC(address(0), _dao);
-        console.log("=====oBTC=====", address(_oBTC));
+        console.log("=====oBTC=====", address(_obeliskBTC));
 
         address _obeliskNetworkImple = address(new ObeliskNetwork());
         ObeliskNetwork _obeliskNetwork = ObeliskNetwork(payable(new ERC1967Proxy(_obeliskNetworkImple, "")));
 
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
 
-
-        _oBTC.changeTokenAdmin(address(_obeliskNetwork));
-        _oBTC.transferOwnership(_owner);
+        _obeliskBTC.grantRole(_obeliskBTC.minterRole(), address(_obeliskNetwork));
+        _obeliskBTC.grantRole(_obeliskBTC.burnerRole(), address(_obeliskNetwork));
 
         address _mintSecurityImple = address(new MintSecurity());
         MintSecurity _mintSecurity = MintSecurity(payable(new ERC1967Proxy(_mintSecurityImple, "")));
@@ -59,9 +47,10 @@ contract MainnetDeployObelisk is Script {
 
         // console.log("=====strategyManager=====", address(_strategyManager));
 
-        address[] memory _mintStrategies = deployMintStrategys(_owner, address(_obeliskNetwork), address(_oBTC));
+        // todo modify Mint token
+        address[] memory _mintStrategies = deployMintStrategys(_owner, address(_obeliskNetwork), address(_obeliskBTC));
         address[] memory _tokenAddrs = new address[](1);
-        _tokenAddrs[0] = address(_oBTC);
+        _tokenAddrs[0] = address(_obeliskBTC);
         _obeliskNetwork.initialize(_owner, _dao, _dao, address(_mintSecurity), _tokenAddrs, _mintStrategies);
 
         _mintSecurity.initialize(_owner, _dao, address(_obeliskNetwork));
@@ -75,7 +64,6 @@ contract MainnetDeployObelisk is Script {
         // _strategies[2] = address(fbtc);
 
         // _strategyManager.initialize(_owner, _dao, _strategies);
-
 
         vm.stopBroadcast();
     }
@@ -96,87 +84,6 @@ contract MainnetDeployObelisk is Script {
         address[] memory _mintStrategies = new address[](1);
         _mintStrategies[0] = address(_mintStrategy);
         return _mintStrategies;
-    }
-
-    function deployStrategysB2(address _ownerAddr, address _oBTC, address _strategyManager)
-        internal
-        returns (address)
-    {
-        address _defiStrategyImple = address(new DefiStrategy());
-        DefiStrategy _defiStrategyB2 = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
-        console.log("=====defiStrategyB2=====", address(_defiStrategyB2));
-        OYBTCB2 oyBTCb2 = new OYBTCB2(address(_defiStrategyB2), _dao);
-        // transfer owner
-        oyBTCb2.transferOwnership(_ownerAddr);
-        console.log("=====nBTCb2=====", address(oyBTCb2));
-        address[] memory _whitelistedStrategies = new address[](0);
-        _defiStrategyB2.initialize(
-            _ownerAddr,
-            _dao,
-            _strategyManager,
-            _dao,
-            10000,
-            10000000000000,
-            address(_oBTC),
-            address(oyBTCb2),
-            _whitelistedStrategies
-        );
-
-        return address(_defiStrategyB2);
-    }
-
-    function deployStrategysBBL(address _ownerAddr, address _oBTC, address _strategyManager)
-        internal
-        returns (address)
-    {
-        address _defiStrategyImple = address(new DefiStrategy());
-        DefiStrategy _defiStrategyBBL = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
-        console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
-        OYBTCBBN oyBTCbbl = new OYBTCBBN(address(_defiStrategyBBL), _dao);
-        // transfer owner
-        oyBTCbbl.transferOwnership(_ownerAddr);
-        console.log("=====nBTCbbl=====", address(oyBTCbbl));
-        address[] memory _whitelistedStrategies = new address[](0);
-        _defiStrategyBBL.initialize(
-            _ownerAddr,
-            _dao,
-            _strategyManager,
-            _dao,
-            10000,
-            10000000000000,
-            address(_oBTC),
-            address(oyBTCbbl),
-            _whitelistedStrategies
-        );
-
-        return address(_defiStrategyBBL);
-    }
-
-    function deployStrategysFBTC(address _ownerAddr, address _oBTC, address _strategyManager)
-        internal
-        returns (address)
-    {
-        address _defiStrategyImple = address(new DefiStrategy());
-        DefiStrategy _defiStrategyFBTC = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
-        console.log("=====defiStrategyFBTC=====", address(_defiStrategyFBTC));
-        OYBTCFBTC oyBTCfbtc = new OYBTCFBTC(address(_defiStrategyFBTC), _dao);
-        // transfer owner
-        oyBTCfbtc.transferOwnership(_ownerAddr);
-        console.log("=====oyBTCfbtc=====", address(oyBTCfbtc));
-        address[] memory _whitelistedStrategies = new address[](0);
-        _defiStrategyFBTC.initialize(
-            _ownerAddr,
-            _dao,
-            _strategyManager,
-            _dao,
-            10000,
-            10000000000000,
-            address(_oBTC),
-            address(oyBTCfbtc),
-            _whitelistedStrategies
-        );
-
-        return address(_defiStrategyFBTC);
     }
 }
 

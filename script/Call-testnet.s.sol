@@ -31,7 +31,6 @@ contract HoleskyCallObelisk is Script {
             vs: 0x76921c93ad395e0bbb972500d730a76e49a5d238b4fbad674501fb0df5d62f7c
         });
 
-
         bytes32 msgHash =
             mintSecurity.calcMsgHash(token, txHash, destAddr, stakingOutputIdx, inclusionHeight, stakingAmount);
         console.logBytes32(msgHash);

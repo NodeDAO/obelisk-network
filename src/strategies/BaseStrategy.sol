@@ -6,7 +6,7 @@ import "src/modules/Version.sol";
 import "src/modules/Dao.sol";
 import "src/modules/Whitelisted.sol";
 import "src/modules/Call.sol";
-import "src/interfaces/IBaseToken.sol";
+import "src/interfaces/IMintableERC20.sol";
 import "src/interfaces/IBaseStrategy.sol";
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
@@ -199,7 +199,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
             return;
         }
 
-        IBaseToken(strategyToken).whiteListMint(_amount, _user);
+        IMintableERC20(strategyToken).mint(_user, _amount);
     }
 
     function _removeShares(address _user, uint256 _amount) internal {
@@ -210,7 +210,7 @@ abstract contract BaseStrategy is Initializable, Version, Dao, Whitelisted, Call
             return;
         }
 
-        IBaseToken(strategyToken).whiteListBurn(_amount, _user);
+        IMintableERC20(strategyToken).burn(_user, _amount);
     }
 
     /**

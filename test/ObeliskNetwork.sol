@@ -4,10 +4,7 @@ pragma solidity 0.8.12;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Script.sol";
-import "src/tokens/OBTC.sol";
-import "src/tokens/OLTC.sol";
-import "src/tokens/OYBTCB2.sol";
-import "src/tokens/OYBTCBBN.sol";
+import "src/tokens/ObeliskBTC.sol";
 import {TestToken, TestToken2, TestStrategy} from "test/TestContract.sol";
 import "src/core/ObeliskNetwork.sol";
 import "src/strategies/DefiStrategy.sol";
@@ -24,7 +21,7 @@ contract ObeliskNetworkTest is Test {
     address _blackListAdmin = address(1003);
     address _fundManager = address(1004);
 
-    OBTC public _oBTC;
+    ObeliskBTC public _oBTC;
     ObeliskNetwork public _obeliskNetwork;
     StrategyManager public _strategyManager;
     MintSecurity public _mintSecurity;
@@ -41,7 +38,11 @@ contract ObeliskNetworkTest is Test {
 
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
 
-        _oBTC = new OBTC(address(_obeliskNetwork), _dao);
+        _oBTC = new ObeliskBTC("Obelisk BTC", "oBTC", _dao);
+        vm.startPrank(_dao);
+        _oBTC.grantRole(_oBTC.minterRole(), address(_obeliskNetwork));
+        _oBTC.grantRole(_oBTC.burnerRole(), address(_obeliskNetwork));
+        vm.stopPrank();
 
         console.log("=====obBTC=====", address(_oBTC));
 
@@ -58,11 +59,19 @@ contract ObeliskNetworkTest is Test {
         address _mintStrategyImple = address(new MintStrategy());
         _mintStrategy = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
 
-        _testBTC = new TestToken("test BTC", "tBTC", _dao, _dao);
+        _testBTC = new TestToken("test BTC", "tBTC", _dao);
+        vm.startPrank(_dao);
+        _testBTC.grantRole(_testBTC.minterRole(), _dao);
+        _testBTC.grantRole(_testBTC.burnerRole(), _dao);
+        vm.stopPrank();
         _mintStrategy.initialize(_ownerAddr, _dao, address(_obeliskNetwork), address(_testBTC), address(_oBTC), 50400);
 
         _mintStrategy2 = MintStrategy(payable(new ERC1967Proxy(_mintStrategyImple, "")));
-        _testBTC2 = new TestToken2("test BTC 2", "tBTC2", _dao, _dao);
+        _testBTC2 = new TestToken2("test BTC 2", "tBTC2", _dao);
+        vm.startPrank(_dao);
+        _testBTC2.grantRole(_testBTC2.minterRole(), _dao);
+        _testBTC2.grantRole(_testBTC2.burnerRole(), _dao);
+        vm.stopPrank();
         _mintStrategy2.initialize(_ownerAddr, _dao, address(_obeliskNetwork), address(_testBTC2), address(_oBTC), 50400);
 
         address[] memory _tokenAddrs = new address[](1);
@@ -95,8 +104,17 @@ contract ObeliskNetworkTest is Test {
         _defiStrategyBBL = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
         console.log("=====defiStrategyB2=====", address(_defiStrategyB2));
         console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
-        OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2), _dao);
-        OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL), _dao);
+        ObeliskBTC nBTCb2 = new ObeliskBTC("Obelisk Yield BTC-B2", "oyBTC-B2", _dao);
+        ObeliskBTC nBTCbbl = new ObeliskBTC("Obelisk Yield BTC-BBN", "oyBTC-BBN", _dao);
+
+        vm.startPrank(_dao);
+        nBTCb2.grantRole(nBTCb2.minterRole(), address(_defiStrategyB2));
+        nBTCb2.grantRole(nBTCb2.burnerRole(), address(_defiStrategyB2));
+
+        nBTCbbl.grantRole(nBTCbbl.minterRole(), address(_defiStrategyBBL));
+        nBTCbbl.grantRole(nBTCbbl.burnerRole(), address(_defiStrategyBBL));
+        vm.stopPrank();
+
         console.log("=====nBTCb2=====", address(nBTCb2));
         console.log("=====nBTCbbl=====", address(nBTCbbl));
 
@@ -135,6 +153,7 @@ contract ObeliskNetworkTest is Test {
         return _strategies;
     }
 
+    // forge test -vvvv --match-test testMint
     function testMint() public {
         address token = address(_oBTC);
         bytes32 txHash = 0x2c8c452919c6f1d89dec39215926ac4b1e1e258eff8d3d3019120986a76a738a;
@@ -400,9 +419,12 @@ contract ObeliskNetworkTest is Test {
     }
 
     function testAddAsset() public returns (address) {
-        OLTC _oltc = new OLTC(address(_obeliskNetwork), _dao);
-        vm.prank(_dao);
+        ObeliskBTC _oltc = new ObeliskBTC("Obelisk LTC", "oLTC", _dao);
+        vm.startPrank(_dao);
+        _oltc.grantRole(_oltc.minterRole(), address(_obeliskNetwork));
+        _oltc.grantRole(_oltc.burnerRole(), address(_obeliskNetwork));
         _obeliskNetwork.addAsset(address(_oltc));
+        vm.stopPrank();
         return address(_oltc);
     }
 
@@ -412,7 +434,12 @@ contract ObeliskNetworkTest is Test {
     }
 
     function testFailAddAsset2() public {
-        OLTC _oltc = new OLTC(address(_obeliskNetwork), _dao);
+        ObeliskBTC _oltc = new ObeliskBTC("Obelisk LTC", "oLTC", _dao);
+        vm.startPrank(_dao);
+        _oltc.grantRole(_oltc.minterRole(), address(_obeliskNetwork));
+        _oltc.grantRole(_oltc.burnerRole(), address(_obeliskNetwork));
+        vm.stopPrank();
+
         _obeliskNetwork.addAsset(address(_oltc));
     }
 
@@ -547,6 +574,7 @@ contract ObeliskNetworkTest is Test {
         assertEq(strategyList.length, 2);
     }
 
+    // forge test -vvvv --match-test testDeposit
     function testDeposit() public {
         testMint();
         vm.prank(0x3535d10Fc0E85fDBC810bF828F02C9BcB7C2EBA8);
@@ -597,7 +625,7 @@ contract ObeliskNetworkTest is Test {
 
     function testTBTCDeposit() public {
         vm.prank(_dao);
-        _testBTC.whiteListMint(10000000000, address(1));
+        _testBTC.mint(address(1), 10000000000);
         vm.prank(address(1));
         _testBTC.approve(address(_mintStrategy), 100000000);
 
@@ -610,7 +638,7 @@ contract ObeliskNetworkTest is Test {
 
     function testTBTCDeposit2() public {
         vm.prank(_dao);
-        _testBTC2.whiteListMint(100000000000000000000, address(1));
+        _testBTC2.mint(address(1), 100000000000000000000);
         vm.prank(address(1));
         _testBTC2.approve(address(_mintStrategy2), 1000000000000000000);
 
@@ -797,9 +825,9 @@ contract ObeliskNetworkTest is Test {
 
     function testTokenBlackList() public {
         vm.prank(address(_obeliskNetwork));
-        _oBTC.whiteListMint(100000000000, address(1));
+        _oBTC.mint(address(1), 100000000000);
         vm.prank(address(_obeliskNetwork));
-        _oBTC.whiteListMint(100000000000, address(2));
+        _oBTC.mint(address(2), 100000000000);
 
         assertEq(_oBTC.balanceOf(address(1)), 100000000000);
         vm.prank(_dao);
@@ -818,12 +846,6 @@ contract ObeliskNetworkTest is Test {
         testTokenBlackList();
         vm.prank(address(2));
         _oBTC.transfer(address(1), 10000);
-    }
-
-    function testChangeTokenAdmin() public {
-        assertEq(_oBTC.blackListAdmin(), _dao);
-        _oBTC.setBlackListAdmin(address(1));
-        assertEq(_oBTC.blackListAdmin(), address(1));
     }
 
     function testTotalWithdrawalAmount() public {

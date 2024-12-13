@@ -3,11 +3,8 @@ pragma solidity 0.8.12;
 
 import "forge-std/console.sol";
 import "forge-std/Script.sol";
-import "src/tokens/OBTC.sol";
+import "src/tokens/ObeliskBTC.sol";
 import {TestToken, TestToken2} from "test/TestContract.sol";
-import "src/tokens/OYBTCB2.sol";
-import "src/tokens/OYBTCBBN.sol";
-import "src/tokens/OYBTCFBTC.sol";
 import "src/core/ObeliskNetwork.sol";
 import "src/core/ObeliskCustody.sol";
 import "src/strategies/DefiStrategy.sol";
@@ -18,48 +15,38 @@ import {ERC1967Proxy} from "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.so
 
 // forge script script/Deploy-testnet.s.sol:HoleskyDeployObelisk  --rpc-url $HOLESKY_RPC_URL --broadcast --verify  --retries 10 --delay 30
 contract HoleskyDeployObelisk is Script {
-    address _dao = 0xF5ade6B61BA60B8B82566Af0dfca982169a470Dc;
+    address _dao = 0x892e7c8C5E716e17891ABf9395a0de1f2fc84786;
+
+    // modify obtc address for first deploy ObeliskBTC
+    ObeliskBTC public _obeliskBTC = ObeliskBTC(0x787652637307A049f4454f6F8F9D5Ba219200fd9);
 
     function setUp() public {}
 
     function run() public {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY2");
         vm.startBroadcast(deployerPrivateKey);
+
+        console.log("=====oBTC=====", address(_obeliskBTC));
 
         address _obeliskNetworkImple = address(new ObeliskNetwork());
         ObeliskNetwork _obeliskNetwork = ObeliskNetwork(payable(new ERC1967Proxy(_obeliskNetworkImple, "")));
 
         console.log("=====obeliskNetwork=====", address(_obeliskNetwork));
 
-        OBTC _oBTC = new OBTC(address(_obeliskNetwork), _dao);
-        console.log("=====oBTC=====", address(_oBTC));
+        _obeliskBTC.grantRole(_obeliskBTC.minterRole(), address(_obeliskNetwork));
+        _obeliskBTC.grantRole(_obeliskBTC.burnerRole(), address(_obeliskNetwork));
 
         address _mintSecurityImple = address(new MintSecurity());
         MintSecurity _mintSecurity = MintSecurity(payable(new ERC1967Proxy(_mintSecurityImple, "")));
 
         console.log("=====mintSecurity=====", address(_mintSecurity));
 
-        address _strategyManagerImple = address(new StrategyManager());
-        StrategyManager _strategyManager = StrategyManager(payable(new ERC1967Proxy(_strategyManagerImple, "")));
-
-        console.log("=====strategyManager=====", address(_strategyManager));
-
-        address[] memory _mintStrategies = deployMintStrategys(address(_obeliskNetwork), address(_oBTC));
+        address[] memory _mintStrategies = deployMintStrategys(address(_obeliskNetwork), address(_obeliskBTC));
         address[] memory _tokenAddrs = new address[](1);
-        _tokenAddrs[0] = address(_oBTC);
+        _tokenAddrs[0] = address(_obeliskBTC);
         _obeliskNetwork.initialize(_dao, _dao, _dao, address(_mintSecurity), _tokenAddrs, _mintStrategies);
 
         _mintSecurity.initialize(_dao, _dao, address(_obeliskNetwork));
-
-        address fbtc = deployStrategysFBTC(address(_oBTC), address(_strategyManager));
-        address b2 = deployStrategysB2(address(_oBTC), address(_strategyManager));
-        address bbl = deployStrategysBBL(address(_oBTC), address(_strategyManager));
-        address[] memory _strategies = new address[](3);
-        _strategies[0] = address(b2);
-        _strategies[1] = address(bbl);
-        _strategies[2] = address(fbtc);
-
-        _strategyManager.initialize(_dao, _dao, _strategies);
 
         vm.stopBroadcast();
     }
@@ -72,9 +59,15 @@ contract HoleskyDeployObelisk is Script {
         console.log("=====mintStrategy=====", address(_mintStrategy));
         console.log("=====mintStrategy2=====", address(_mintStrategy2));
 
-        address _testBTC = address(new TestToken("test BTC", "tBTC", _dao, _dao));
+        TestToken _testBTC = new TestToken("test BTC", "tBTC", _dao);
+        _testBTC.grantRole(_testBTC.minterRole(), _dao);
+        _testBTC.grantRole(_testBTC.burnerRole(), _dao);
+
         _mintStrategy.initialize(_dao, _dao, address(_obeliskNetwork), address(_testBTC), address(_oBTC), 10);
-        address _testBTC2 = address(new TestToken2("test BTC18", "tBTC18", _dao, _dao));
+        TestToken2 _testBTC2 = new TestToken2("test BTC18", "tBTC18", _dao);
+        _testBTC2.grantRole(_testBTC2.minterRole(), _dao);
+        _testBTC2.grantRole(_testBTC2.burnerRole(), _dao);
+
         _mintStrategy2.initialize(_dao, _dao, address(_obeliskNetwork), address(_testBTC2), address(_oBTC), 10);
 
         console.log("=====testBTC=====", address(_testBTC));
@@ -84,72 +77,6 @@ contract HoleskyDeployObelisk is Script {
         _mintStrategies[0] = address(_mintStrategy);
         _mintStrategies[1] = address(_mintStrategy2);
         return _mintStrategies;
-    }
-
-    function deployStrategysB2(address _obBTC, address _strategyManager) internal returns (address) {
-        address _defiStrategyImple = address(new DefiStrategy());
-        DefiStrategy _defiStrategyB2 = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
-        console.log("=====defiStrategyB2=====", address(_defiStrategyB2));
-        OYBTCB2 nBTCb2 = new OYBTCB2(address(_defiStrategyB2), _dao);
-        console.log("=====nBTCb2=====", address(nBTCb2));
-        address[] memory _whitelistedStrategies = new address[](0);
-        _defiStrategyB2.initialize(
-            _dao,
-            _dao,
-            _strategyManager,
-            _dao,
-            10000,
-            10000000000000,
-            address(_obBTC),
-            address(nBTCb2),
-            _whitelistedStrategies
-        );
-
-        return address(_defiStrategyB2);
-    }
-
-    function deployStrategysBBL(address _obBTC, address _strategyManager) internal returns (address) {
-        address _defiStrategyImple = address(new DefiStrategy());
-        DefiStrategy _defiStrategyBBL = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
-        console.log("=====defiStrategyBBL=====", address(_defiStrategyBBL));
-        OYBTCBBN nBTCbbl = new OYBTCBBN(address(_defiStrategyBBL), _dao);
-        console.log("=====nBTCbbl=====", address(nBTCbbl));
-        address[] memory _whitelistedStrategies = new address[](0);
-        _defiStrategyBBL.initialize(
-            _dao,
-            _dao,
-            _strategyManager,
-            _dao,
-            10000,
-            10000000000000,
-            address(_obBTC),
-            address(nBTCbbl),
-            _whitelistedStrategies
-        );
-
-        return address(_defiStrategyBBL);
-    }
-
-    function deployStrategysFBTC(address _obBTC, address _strategyManager) internal returns (address) {
-        address _defiStrategyImple = address(new DefiStrategy());
-        DefiStrategy _defiStrategyFBTC = DefiStrategy(payable(new ERC1967Proxy(_defiStrategyImple, "")));
-        console.log("=====defiStrategyFBTC=====", address(_defiStrategyFBTC));
-        OYBTCFBTC oyBTCfbtc = new OYBTCFBTC(address(_defiStrategyFBTC), _dao);
-        console.log("=====oyBTCfbtc=====", address(oyBTCfbtc));
-        address[] memory _whitelistedStrategies = new address[](0);
-        _defiStrategyFBTC.initialize(
-            _dao,
-            _dao,
-            _strategyManager,
-            _dao,
-            10000,
-            10000000000000,
-            address(_obBTC),
-            address(oyBTCfbtc),
-            _whitelistedStrategies
-        );
-
-        return address(_defiStrategyFBTC);
     }
 }
 
@@ -169,7 +96,7 @@ contract HoleskyDeployObeliskCustody is Script {
         console.log("=====obeliskCustodyImple=====", address(_obeliskCustody));
 
         string[] memory marks = new string[](1);
-        marks[0]= "custody";
+        marks[0] = "custody";
         string[] memory btcAddrs = new string[](1);
         btcAddrs[0] = "tb1qdlexklc4kq8nzntqkkay06zyjfu790jsuj3wxr";
         _obeliskCustody.initialize(_dao, _dao, marks, btcAddrs);

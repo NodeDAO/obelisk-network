@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.12;
 
-import "src/tokens/BaseToken.sol";
+import "src/tokens/ObeliskBTC.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract TestToken is BaseToken {
-    constructor(string memory _name, string memory _symbol, address _tokenAdmin, address _blackListAdmi)
-        BaseToken(_name, _symbol, _tokenAdmin, _blackListAdmi)
+contract TestToken is ObeliskBTC {
+    constructor(string memory _name, string memory _symbol, address _tokenAdmin)
+        ObeliskBTC(_name, _symbol, _tokenAdmin)
     {}
 }
 
-contract TestToken2 is BaseToken {
-    constructor(string memory _name, string memory _symbol, address _tokenAdmin, address _blackListAdmi)
-        BaseToken(_name, _symbol, _tokenAdmin, _blackListAdmi)
+contract TestToken2 is ObeliskBTC {
+    constructor(string memory _name, string memory _symbol, address _tokenAdmin)
+        ObeliskBTC(_name, _symbol, _tokenAdmin)
     {}
 
     function decimals() public pure override returns (uint8) {
